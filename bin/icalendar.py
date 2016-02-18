@@ -40,8 +40,8 @@ class OutlookCalendarDataLoader(object):
 
     _time_fmt = "%Y-%m-%d"
     _event_fmt = ("""<stream><event>"""
-                  """<host>{host}</host><index>{index}<index>"""
-                  """<sourcetype>iwork:iemail</sourcetype>"""
+                  """<host>{host}</host><index>{index}</index>"""
+                  """<sourcetype>iwork:calendar</sourcetype>"""
                   """<data><![CDATA[{data}]]></data>"""
                   """</event></stream>""")
 
@@ -89,6 +89,8 @@ class OutlookCalendarDataLoader(object):
         logger.info("End of collecting calendar data")
 
     def _collect_and_index(self, calendar, start_date, end_date):
+        logger.debug("Start collecting calendar data from=%s, to=%s",
+                     start_date, end_date)
         all_events = self._list_events(calendar, start_date, end_date)
         if all_events is None:
             return
@@ -102,6 +104,8 @@ class OutlookCalendarDataLoader(object):
                 host=host, index=index, data=json.dumps(event_to_json(e)))
             events.append(event)
         self._config[c.event_writer].write_events("".join(events))
+        logger.debug("End of collecting calendar data from=%s, to=%s",
+                     start_date, end_date)
 
     @staticmethod
     def _list_events(calendar, start_date, end_date):
