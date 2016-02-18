@@ -58,7 +58,6 @@ class OutlookCalendarDataLoader(object):
         """
 
         self._config = config
-        logger.info(self._config)
 
     def __call__(self):
         self.collect_data()
