@@ -18,7 +18,7 @@ class TimerQueue(object):
     A timer queue implementation, runs a separate thread to handle timers
     """
 
-    import splunktalib.sortedcontainers as sc
+    import sortedcontainers as sc
 
     def __init__(self):
         self._timers = TimerQueue.sc.SortedSet()

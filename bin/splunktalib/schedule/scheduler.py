@@ -13,7 +13,7 @@ class Scheduler(object):
     A simple scheduler which schedules the periodic or once event
     """
 
-    import splunktalib.sortedcontainers as sc
+    import sortedcontainers as sc
 
     max_delay_time = 60
 

@@ -53,7 +53,7 @@ class DataLoaderManager(object):
         self._logger.info("DataLoaderManager started.")
 
         for job in jobs:
-            job.get_props()["writer"] = self
+            job.get_props()["event_writer"] = self
             job.get_props()["data_loader_mgr"] = self
 
         def _enqueue_io_job(job):

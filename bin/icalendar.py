@@ -38,11 +38,11 @@ def event_to_json(event):
 
 class OutlookCalendarDataLoader(object):
 
-    _time_fmt = "%Y-%m-%dT%H:%M:%S"
+    _time_fmt = "%Y-%m-%d"
     _event_fmt = ("""<stream><event>"""
                   """<host>{host}</host><index>{index}<index>"""
                   """<sourcetype>iwork:iemail</sourcetype>"""
-                  """<data>![CDATA[{data}]]</data>"""
+                  """<data><![CDATA[{data}]]></data>"""
                   """</event></stream>""")
 
     def __init__(self, config):
@@ -52,15 +52,20 @@ class OutlookCalendarDataLoader(object):
         "host": exchange_host,
         "username": domain\\username,
         "password": your_password,
-        "start_date": datatime string in "%Y-%m-%dT%H:%M:%S" in UTC,
-        "end_date": datatime string in "%Y-%m-%dT%H:%M:%S" in UTC,
+        "start_date": datatime string in "%Y-%m-%d" in UTC,
+        "end_date": datatime string in "%Y-%m-%d" in UTC,
         }
         """
 
         self._config = config
+        logger.info(self._config)
+
+    def __call__(self):
+        self.collect_data()
 
     @scp.catch_all(logger)
     def collect_data(self):
+        logger.info("Start collecting calendar data")
         url = "https://{host}/EWS/Exchange.asmx".format(
             host=self._config[c.host])
         connection = ExchangeNTLMAuthConnection(
@@ -82,6 +87,7 @@ class OutlookCalendarDataLoader(object):
             start_date = edate
 
         self._collect_and_index(calendar, start_date, end_date)
+        logger.info("End of collecting calendar data")
 
     def _collect_and_index(self, calendar, start_date, end_date):
         all_events = self._list_events(calendar, start_date, end_date)
@@ -110,6 +116,15 @@ class OutlookCalendarDataLoader(object):
                 time.sleep((i + 1)**2)
         return None
 
+    def get_props(self):
+        return self._config
+
+    def get_interval(self):
+        return self._config.get(c.polling_interval, 86400)
+
+    def stop(self):
+        pass
+
 
 if __name__ == "__main__":
     import sys
@@ -126,5 +141,6 @@ if __name__ == "__main__":
         c.end_date: "2015-2-28T23:59:59",
         c.event_writer: O(),
     }
+
     loader = OutlookCalendarDataLoader(config)
     loader.collect_data()

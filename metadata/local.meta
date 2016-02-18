@@ -1,0 +1,17 @@
+[iwork/iemail_settings]
+version = 6.3.2
+modtime = 1455793468.015184000
+
+[iwork/icalendar_settings]
+version = 6.3.2
+modtime = 1455793468.065787000
+
+[passwords/credential%3ASplunk_TA_iwork%3Aiemail_settings%3A]
+owner = admin
+version = 6.3.2
+modtime = 1455793468.004021000
+
+[passwords/credential%3ASplunk_TA_iwork%3Aicalendar_settings%3A]
+owner = admin
+version = 6.3.2
+modtime = 1455793468.054934000

@@ -1,6 +1,5 @@
 from datetime import datetime
 from datetime import timedelta
-# import smtplib
 import imaplib
 from email.parser import Parser
 import json
@@ -52,7 +51,7 @@ class OutlookEmailDataLoader(object):
     _event_fmt = ("""<stream><event><source>{source}</source>"""
                   """<host>{host}</host><index>{index}<index>"""
                   """<sourcetype>iwork:iemail</sourcetype>"""
-                  """<data>![CDATA[{data}]]</data>"""
+                  """<data><![CDATA[{data}]]></data>"""
                   """</event></stream>""")
 
     def __init__(self, config):
@@ -71,8 +70,12 @@ class OutlookEmailDataLoader(object):
         self._config = config
         self._get_start_end_dates()
 
+    def __call__(self):
+        self.collect_data()
+
     @scp.catch_all(logger)
     def collect_data(self):
+        logger.info("Start collecting email data")
         connection = imaplib.IMAP4_SSL(self._config[c.host], 993)
         connection.login(self._config[c.username], self._config[c.password])
         folders = self._config.get(c.folders)
@@ -90,6 +93,7 @@ class OutlookEmailDataLoader(object):
             start_date = edate
 
         self._collect_and_index(connection, folders, start_date, end_date)
+        logger.info("End of collecting email data")
 
     def _collect_and_index(self, connection, folders, start_date, edate):
         sdate_str = datetime.strftime(start_date, self._email_time_fmt)
@@ -152,6 +156,15 @@ class OutlookEmailDataLoader(object):
             end_date = datetime.utcnow()
         self._config[c.end_date] = end_date
 
+    def get_props(self):
+        return self._config
+
+    def get_interval(self):
+        return self._config.get(c.polling_interval, 86400)
+
+    def stop(self):
+        pass
+
 
 if __name__ == "__main__":
     import sys
@@ -165,8 +178,8 @@ if __name__ == "__main__":
         c.username: "kchen@splunk.com",
         c.password: "***",
         c.start_date: "2015-01-01",
-        c.end_date: "2015-01-12",
-        c.folders: ["INBOX/AddOn"],
+        c.end_date: "2016-02-16",
+        c.folders: ["Sent Items"],
         c.event_writer: O(),
     }
     loader = OutlookEmailDataLoader(config)
