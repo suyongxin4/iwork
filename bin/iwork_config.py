@@ -27,7 +27,8 @@ class IWorkConfig(object):
 
     def get_tasks(self):
         mgr = tcm.TAConfManager(
-            c.iwork, self._metas[c.server_uri], self._metas[c.session_key])
+            c.iwork, self._metas[c.server_uri], self._metas[c.session_key],
+            c.splunk_ta_iwork)
         mgr.reload()
         mgr.set_encrypt_keys([c.password])
         stanzas = mgr.all(return_acl=False)
