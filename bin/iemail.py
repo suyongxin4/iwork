@@ -16,6 +16,10 @@ import splunktalib.common.pattern as scp
 
 
 def message_to_json(message):
+    if not message[0]:
+        logger.warn("Got invalid message=%s", message)
+        return None
+
     p = Parser()
     msg = p.parsestr(message[0][1])
     json_event = {
@@ -49,8 +53,8 @@ class OutlookEmailDataLoader(object):
     _time_fmt = "%Y-%m-%d"
     _email_time_fmt = "%d-%b-%Y"
     _event_fmt = ("""<stream><event><source>{source}</source>"""
-                  """<host>{host}</host><index>{index}<index>"""
-                  """<sourcetype>iwork:iemail</sourcetype>"""
+                  """<host>{host}</host><index>{index}</index>"""
+                  """<sourcetype>iwork:email</sourcetype>"""
                   """<data><![CDATA[{data}]]></data>"""
                   """</event></stream>""")
 
@@ -108,6 +112,8 @@ class OutlookEmailDataLoader(object):
             self._write_events(folder, emails)
 
     def _collect_data_for_folder(self, connection, folder, filters):
+        logger.debug("Start collecting email data for folder=%s, filters=%s",
+                     folder, filters)
         connection.select(folder)
         res, data = connection.search(None, filters)
         if res != "OK":
@@ -124,7 +130,12 @@ class OutlookEmailDataLoader(object):
                 logger.error("Failed to get email for email_id=%s, error=%s",
                              msg_id, res)
                 continue
-            emails.append(message_to_json(data))
+
+            msg = message_to_json(data)
+            if msg is not None:
+                emails.append(msg)
+        logger.debug("End of collecting email data for folder=%s, filters=%s",
+                     folder, filters)
         return emails
 
     def _write_events(self, folder, emails):

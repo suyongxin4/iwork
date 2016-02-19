@@ -39,6 +39,8 @@ class IWorkConfig(object):
             if k in stanzas and stanzas[k]:
                 interval = stanzas[k].get(c.polling_interval, 86400)
                 stanzas[k][c.polling_interval] = int(interval)
+                stanzas[k][c.username] = stanzas[k][c.username].replace(
+                    "\\\\", "\\")
                 stanzas[k].update(self._metas)
                 tasks.append(stanzas[k])
 
