@@ -3,13 +3,15 @@ require([
     'underscore',
     'backbone',
     'bootstrap',
-    'splunkjs/mvc/headerview'
+    'splunkjs/mvc/headerview',
+    'app/views/HomeView'
 ], function(
     $,
     _,
     Backbone,
     Bootstrap,
-    HeaderView
+    HeaderView,
+    HomeView
 ) {
     var headerView = new HeaderView({
         id: 'header',
@@ -18,4 +20,9 @@ require([
         acceleratedAppNav: true
     });
     headerView.render();
+
+    var homeView = new HomeView({
+        el: $('.root-view')
+    });
+    homeView.render();
 });

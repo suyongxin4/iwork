@@ -4,6 +4,9 @@ var config = {
     shim: {
         'bootstrap': {
             deps: ['jquery']
+        },
+        'fullcalendar': {
+            deps: ['jquery', 'moment']
         }
     },
     paths: {
@@ -12,6 +15,8 @@ var config = {
         'core': '../../static/js',
         'bootstrap': '../app/Splunk_TA_iwork/lib/bootstrap/js/bootstrap.min',
         'd3': '../app/Splunk_TA_iwork/lib/d3/d3.min',
+        'moment': '../app/Splunk_TA_iwork/lib/moment/moment.min',
+        'fullcalendar': '../app/Splunk_TA_iwork/lib/fullcalendar/fullcalendar.min',
     },
     enforceDefine: false
 };
