@@ -1,0 +1,6 @@
+<nav search_view="search" color="#65A637">
+
+<view name="Home" default="true" label="Home" />
+<view name="search" default="false" label="Search" />
+
+</nav>

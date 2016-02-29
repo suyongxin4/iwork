@@ -1,2 +1,4 @@
 *.pyc
 *.pyo
+local/
+/metadata/local.meta
