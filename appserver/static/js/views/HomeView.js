@@ -19,10 +19,24 @@ define([
     SearchManager,
     Template
 ) {
+    function getUniqueRows(rows){
+        var dict = {};
+        var dedupedRows = [];
+        rows.forEach(function(row){
+            var key = row.slice(0, 3).join("");
+            if (dict[key]){
+                return;
+            }
+            dict[key] = true;
+            dedupedRows.push(row);
+        });
+        return dedupedRows;
+    }
+
     function DataParser(data){
         this._data = data;
         this._fields = data.fields;
-        this._rows = data.rows;
+        this._rows = getUniqueRows(data.rows);
         this.length = this._rows.length;
         this._rowObjects = [];
         this._rowObjects.length = this.length;
@@ -106,7 +120,7 @@ define([
                 for (var key in buckets){
                     if (buckets.hasOwnProperty(key)){
                         var day = that.$(".calendar .fc-day[data-date='"+key+"']");
-                        var ratio = buckets[key] / 24 / 60;
+                        var ratio = buckets[key] / 8 / 60;
                         if (ratio > 1){
                             ratio = 1;
                         }
