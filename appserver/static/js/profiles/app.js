@@ -7,6 +7,12 @@ var config = {
         },
         'fullcalendar': {
             deps: ['jquery', 'moment']
+        },
+        'ResizeSensor': {
+            deps: ['jquery']
+        },
+        'ElementQueries': {
+            deps: ["ResizeSensor"]
         }
     },
     paths: {
@@ -17,6 +23,8 @@ var config = {
         'd3': '../app/Splunk_TA_iwork/lib/d3/d3.min',
         'moment': '../app/Splunk_TA_iwork/lib/moment/moment.min',
         'fullcalendar': '../app/Splunk_TA_iwork/lib/fullcalendar/fullcalendar.min',
+        'ElementQueries': '../app/Splunk_TA_iwork/lib/CSS-Element-Queries/ElementQueries',
+        'ResizeSensor': '../app/Splunk_TA_iwork/lib/CSS-Element-Queries/ResizeSensor',
     },
     enforceDefine: false
 };

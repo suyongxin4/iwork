@@ -1,0 +1,48 @@
+html {
+    width: 100%;
+    height: 100%;
+}
+body {
+    width: 100%;
+    height: 100%;
+}
+div.root-view {
+    width: calc(100% - 40px);
+    height: calc(100% - 105px);
+    padding: 20px;
+}
+div.root-view .connection-diagram-container {
+    width: 100%;
+    height: 100%;
+}
+div.root-view .connection-diagram-container svg {
+    width: 100%;
+}
+div.root-view .connection-diagram-container svg.network-chart {
+    height: calc(100% - 60px);
+    min-height: 480px;
+}
+div.root-view .connection-diagram-container svg.time-axis {
+    height: 60px;
+}
+div.root-view .connection-diagram-container svg.time-axis .axis line.axis-line, div.root-view .connection-diagram-container svg.time-axis .axis line.axis-tick {
+    stroke: #5c5c5c;
+}
+div.root-view .connection-diagram-container svg.time-axis .axis text.axis-label {
+    fill: #3e3e3e;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+div.root-view .connection-diagram-container svg.time-axis .indicator rect.background {
+    cursor: pointer;
+}
+div.root-view .connection-diagram-container svg.time-axis .indicator rect.indicator {
+    cursor: move;
+    fill: #99ff99;
+    opacity: 0.9;
+}
+div.root-view .connection-diagram-container svg.time-axis .indicator circle {
+    cursor: col-resize;
+    fill: #0078ff;
+}

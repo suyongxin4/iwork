@@ -117,6 +117,7 @@ define([
                     var d = -s.diff(dp.getRowField(i, "stop"), "minutes");
                     buckets[s.format("YYYY-MM-DD")] += d;
                 }
+                that.$(".calendar .fc-day").css("background", "none");
                 for (var key in buckets){
                     if (buckets.hasOwnProperty(key)){
                         var day = that.$(".calendar .fc-day[data-date='"+key+"']");
