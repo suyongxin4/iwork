@@ -14,6 +14,7 @@ from splunktalib.common import log
 logger = log.Logs(c.iwork_log_ns).get_logger(c.iwork_log)
 
 
+import iwork_checkpointer as ickpt
 import splunktalib.common.pattern as scp
 
 
@@ -29,7 +30,7 @@ def event_to_json(event):
     for attendee in event.attendees:
         attendees.append({
             "name": attendee.name,
-            "email": attendee.email,
+            "email": attendee.email.lower(),
             "required": attendee.required,
         })
     json_event["attendees"] = attendees
@@ -38,7 +39,6 @@ def event_to_json(event):
 
 class OutlookCalendarDataLoader(object):
 
-    _time_fmt = "%Y-%m-%d"
     _event_fmt = ("""<stream><event>"""
                   """<host>{host}</host><index>{index}</index>"""
                   """<sourcetype>iwork:calendar</sourcetype>"""
@@ -53,11 +53,12 @@ class OutlookCalendarDataLoader(object):
         "username": domain\\username,
         "password": your_password,
         "start_date": datatime string in "%Y-%m-%d" in UTC,
-        "end_date": datatime string in "%Y-%m-%d" in UTC,
         }
         """
 
         self._config = config
+        self._ckpt = ickpt.WorkCheckpointer(config)
+        self._key = "icalendar"
 
     def __call__(self):
         self.collect_data()
@@ -72,10 +73,8 @@ class OutlookCalendarDataLoader(object):
             password=self._config[c.password])
         service = Exchange2010Service(connection)
         calendar = service.calendar()
-        start_date = datetime.strptime(
-            self._config[c.start_date], self._time_fmt)
-        end_date = datetime.strptime(
-            self._config[c.end_date], self._time_fmt)
+        start_date = self._ckpt.end_date(self._key)
+        end_date = datetime.utcnow()
 
         while 1:
             edate = start_date + timedelta(days=1)
@@ -83,14 +82,16 @@ class OutlookCalendarDataLoader(object):
                 break
 
             self._collect_and_index(calendar, start_date, edate)
+            self._ckpt.set_end_date(self._key, edate)
             start_date = edate
 
         self._collect_and_index(calendar, start_date, end_date)
+        self._ckpt.set_end_date(self._key, end_date)
         logger.info("End of collecting calendar data")
 
     def _collect_and_index(self, calendar, start_date, end_date):
-        logger.debug("Start collecting calendar data from=%s, to=%s",
-                     start_date, end_date)
+        logger.info("Start collecting calendar data from=%s, to=%s",
+                    start_date, end_date)
         all_events = self._list_events(calendar, start_date, end_date)
         if all_events is None:
             return
@@ -104,8 +105,8 @@ class OutlookCalendarDataLoader(object):
                 host=host, index=index, data=json.dumps(event_to_json(e)))
             events.append(event)
         self._config[c.event_writer].write_events("".join(events))
-        logger.debug("End of collecting calendar data from=%s, to=%s",
-                     start_date, end_date)
+        logger.info("End of collecting calendar data from=%s, to=%s",
+                    start_date, end_date)
 
     @staticmethod
     def _list_events(calendar, start_date, end_date):
@@ -140,8 +141,8 @@ if __name__ == "__main__":
         c.host: "west.mail.splunk.com",
         c.username: "\\kchen@splunk.com",
         c.password: "***",
-        c.start_date: "2015-01-01T00:00:00",
-        c.end_date: "2015-2-28T23:59:59",
+        c.start_date: "2015-01-01",
+        c.checkpoint_dir: ".",
         c.event_writer: O(),
     }
 

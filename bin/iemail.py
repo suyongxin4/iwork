@@ -1,5 +1,8 @@
 from datetime import datetime
 from datetime import timedelta
+import time
+import traceback
+import base64
 import imaplib
 from email.parser import Parser
 import json
@@ -12,7 +15,51 @@ from splunktalib.common import log
 logger = log.Logs(c.iwork_log_ns).get_logger(c.iwork_log)
 
 
+import iwork_checkpointer as ickpt
 import splunktalib.common.pattern as scp
+
+
+def _get_key(folder):
+    return "iemail_{folder}".format(folder=base64.b64encode(folder))
+
+
+def search(connection, folder, filters):
+    for i in xrange(10):
+        try:
+            res, data = connection.search(None, filters)
+            if res == "OK":
+                return data
+            else:
+                msg = ("Failed to search email for folder={} with filters={}, "
+                       "error={}").format(folder, filters, res)
+                logger.error(msg)
+                raise Exception(msg)
+        except Exception:
+            logger.error(
+                "Failed to search email for folder=%s with filters=%s, "
+                "error=%s", folder, filters, traceback.format_exc())
+            time.sleep(2)
+            continue
+    return None
+
+
+def fetch(connection, msg_id):
+    for i in xrange(3):
+        try:
+            res, data = connection.fetch(msg_id, "(RFC822)")
+            if res == "OK":
+                return data
+            else:
+                msg = "Failed to get email for email_id={}, error={}".format(
+                    msg_id, res)
+                logger.error(msg)
+                raise Exception(msg)
+        except Exception:
+            logger.error("Failed to get email for email_id=%s, error=%s",
+                         msg_id, traceback.format_exc())
+            time.sleep(2)
+            continue
+    return None
 
 
 def message_to_json(message):
@@ -23,8 +70,8 @@ def message_to_json(message):
     p = Parser()
     msg = p.parsestr(message[0][1])
     json_event = {
-        "from": msg.get("From"),
-        "to": msg.get("To"),
+        "from": msg.get("From").lower(),
+        "to": msg.get("To").lower(),
         "subject": msg.get("Subject"),
         "date": msg.get("Date"),
         "thread-topic": msg.get("Thread-Topic"),
@@ -50,7 +97,6 @@ def get_folders(connection):
 
 class OutlookEmailDataLoader(object):
 
-    _time_fmt = "%Y-%m-%d"
     _email_time_fmt = "%d-%b-%Y"
     _event_fmt = ("""<stream><event><source>{source}</source>"""
                   """<host>{host}</host><index>{index}</index>"""
@@ -66,13 +112,12 @@ class OutlookEmailDataLoader(object):
         "username": username,
         "password": your_password,
         "start_date": datatime string in "%Y-%m-%d" in UTC,
-        "end_date": datatime string in "%Y-%m-%d" in UTC,
         "folders": ["INBOX", "INBOX/AddOn"],
         }
         """
 
         self._config = config
-        self._get_start_end_dates()
+        self._ckpt = ickpt.WorkCheckpointer(config)
 
     def __call__(self):
         self.collect_data()
@@ -86,56 +131,54 @@ class OutlookEmailDataLoader(object):
         if not folders:
             folders = get_folders(connection)
 
-        start_date = self._config[c.start_date]
-        end_date = self._config[c.end_date]
+        for folder in folders:
+            self._collect_and_index(connection, folder)
+
+        logger.info("End of collecting email data")
+
+    def _collect_and_index(self, connection, folder):
+        start_date = self._ckpt.end_date(_get_key(folder))
+        end_date = datetime.utcnow()
+
+        def do_collect(sdate, edate):
+            sdate_str = datetime.strftime(sdate, self._email_time_fmt)
+            edate_str = datetime.strftime(edate, self._email_time_fmt)
+            filters = '(SINCE "{start}" BEFORE "{end}")'.format(
+                start=sdate_str, end=edate_str)
+
+            emails = self._collect_data_for_folder(connection, folder, filters)
+            self._write_events(folder, emails)
+            self._ckpt.set_end_date(_get_key(folder), edate)
+
         while 1:
             edate = start_date + timedelta(days=1)
             if edate >= end_date:
                 break
 
-            self._collect_and_index(connection, folders, start_date, edate)
+            do_collect(start_date, edate)
             start_date = edate
-
-        self._collect_and_index(connection, folders, start_date, end_date)
-        logger.info("End of collecting email data")
-
-    def _collect_and_index(self, connection, folders, start_date, edate):
-        sdate_str = datetime.strftime(start_date, self._email_time_fmt)
-        edate_str = datetime.strftime(edate, self._email_time_fmt)
-
-        filters = '(SINCE "{start}" BEFORE "{end}")'.format(
-            start=sdate_str, end=edate_str)
-
-        for folder in folders:
-            emails = self._collect_data_for_folder(
-                connection, folder, filters)
-            self._write_events(folder, emails)
+        do_collect(start_date, end_date)
 
     def _collect_data_for_folder(self, connection, folder, filters):
-        logger.debug("Start collecting email data for folder=%s, filters=%s",
-                     folder, filters)
+        logger.info("Start collecting email data for folder=%s, filters=%s",
+                    folder, filters)
         connection.select(folder)
-        res, data = connection.search(None, filters)
-        if res != "OK":
-            logger.error("Failed to search email for folder=%s with "
-                         "filters=%s, error=%s", folder, filters, res)
+        data = search(connection, folder, filters)
+        if data is None:
             return
 
-        # FIXME checkpoint
         emails = []
         msg_ids = data[0].split()
         for msg_id in msg_ids:
-            res, data = connection.fetch(msg_id, "(RFC822)")
-            if res != "OK":
-                logger.error("Failed to get email for email_id=%s, error=%s",
-                             msg_id, res)
+            data = fetch(connection, msg_id)
+            if data is None:
                 continue
 
             msg = message_to_json(data)
             if msg is not None:
                 emails.append(msg)
-        logger.debug("End of collecting email data for folder=%s, filters=%s",
-                     folder, filters)
+        logger.info("End of collecting email data for folder=%s, filters=%s",
+                    folder, filters)
         return emails
 
     def _write_events(self, folder, emails):
@@ -151,21 +194,6 @@ class OutlookEmailDataLoader(object):
                 source=folder, host=host, index=index, data=json.dumps(e))
             events.append(event)
         self._config[c.event_writer].write_events("".join(events))
-
-    def _get_start_end_dates(self):
-        if self._config.get(c.start_date):
-            start_date = datetime.strptime(
-                self._config[c.start_date], self._time_fmt)
-        else:
-            start_date = datetime.utcnow() - timedelta(months=12)
-        self._config[c.start_date] = start_date
-
-        if self._config.get(c.end_date):
-            end_date = datetime.strptime(
-                self._config[c.end_date], self._time_fmt)
-        else:
-            end_date = datetime.utcnow()
-        self._config[c.end_date] = end_date
 
     def get_props(self):
         return self._config
@@ -189,9 +217,9 @@ if __name__ == "__main__":
         c.username: "kchen@splunk.com",
         c.password: "***",
         c.start_date: "2015-01-01",
-        c.end_date: "2016-02-16",
         c.folders: ["Sent Items"],
         c.event_writer: O(),
+        c.checkpoint_dir: ".",
     }
     loader = OutlookEmailDataLoader(config)
     loader.collect_data()
