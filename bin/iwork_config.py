@@ -54,7 +54,7 @@ class IWorkConfig(object):
         mgr.set_encrypt_keys([c.password])
         for k in [c.iemail_settings, c.icalendar_settings]:
             if k in stanzas and stanzas[k]:
-                if stanzas[k][c.username] and mgr.is_encrypted(stanzas[k]):
+                if stanzas[k][c.username] and not mgr.is_encrypted(stanzas[k]):
                     mgr.update(stanzas[k])
 
         return tasks

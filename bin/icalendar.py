@@ -56,6 +56,9 @@ class OutlookCalendarDataLoader(object):
         }
         """
 
+        if not config[c.username].startswith("\\"):
+            config[c.host] = "\\{username}".format(username=config[c.username])
+
         self._config = config
         self._ckpt = ickpt.WorkCheckpointer(config)
         self._key = "icalendar"
