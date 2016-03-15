@@ -71,19 +71,19 @@ def message_to_json(message):
     p = Parser()
     msg = p.parsestr(message[0][1])
     pat = re.compile(r"<([^>]+\.com)>")
-    sender = msg.get("From").lower()
-    res = pat.search(sender)
-    if res:
-        sender = res.group(1)
+    sender = msg.get("From")
+    if sender:
+        sender = sender.lower()
+        res = pat.search(sender)
+        if res:
+            sender = res.group(1)
 
-    to = msg.get("To")
-    if to:
-        to = to.lower()
-        receivers = pat.findall(to)
+    receivers = msg.get("To")
+    if receivers:
+        receivers = receivers.lower()
+        receivers = pat.findall(receivers)
         if not receivers:
-            receivers = to.split(",")
-    else:
-        receivers = to
+            receivers = msg.get("To").split(",")
 
     json_event = {
         "from": sender,
@@ -95,7 +95,7 @@ def message_to_json(message):
     return json_event
 
 
-def get_folders(connection, ignores=()):
+def _get_folders(connection, ignores=()):
     res, data = connection.list()
     if res != "OK":
         logger.error("Failed to list email folders, reason=%s", res)
@@ -116,6 +116,17 @@ def get_folders(connection, ignores=()):
     return folders
 
 
+def create_connection(config):
+    connection = imaplib.IMAP4_SSL(config[c.host], 993)
+    connection.login(config[c.username], config[c.password])
+    return connection
+
+
+def get_folders(config):
+    connection = create_connection(config)
+    return _get_folders(connection, OutlookEmailDataLoader.ignores)
+
+
 class OutlookEmailDataLoader(object):
 
     _email_time_fmt = "%d-%b-%Y"
@@ -124,6 +135,8 @@ class OutlookEmailDataLoader(object):
                   """<sourcetype>iwork:email</sourcetype>"""
                   """<data><![CDATA[{data}]]></data>"""
                   """</event></stream>""")
+    ignores = ["drafts", '"deleted items"', '"junk e-mail"', "contacts",
+               "calendar", "journal"]
 
     def __init__(self, config):
         """
@@ -146,13 +159,10 @@ class OutlookEmailDataLoader(object):
     @scp.catch_all(logger)
     def collect_data(self):
         logger.info("Start collecting email data")
-        connection = imaplib.IMAP4_SSL(self._config[c.host], 993)
-        connection.login(self._config[c.username], self._config[c.password])
+        connection = create_connection(self._config)
         folders = self._config.get(c.folders)
-        ignores = ["drafts", '"deleted items"', '"junk e-mail"', "contacts",
-                   "calendar"]
         if not folders:
-            folders = get_folders(connection, ignores)
+            folders = _get_folders(connection, self.ignores)
 
         for folder in folders:
             self._collect_and_index(connection, folder)

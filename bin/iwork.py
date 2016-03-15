@@ -5,6 +5,7 @@ This is the main entry point for iWork TA
 """
 
 import time
+import copy
 
 import iwork_consts as c
 from splunktalib.common import log
@@ -26,11 +27,18 @@ def print_scheme():
     tac.print_scheme("Splunk AddOn for Exchange calendar/email", "For fun")
 
 
-def create_job(task):
+def create_jobs(task):
     if task[c.name] == c.icalendar_settings:
-        return icalendar.OutlookCalendarDataLoader(task)
+        return [icalendar.OutlookCalendarDataLoader(task)]
     elif task[c.name] == c.iemail_settings:
-        return iemail.OutlookEmailDataLoader(task)
+        # Expand email by folder
+        folders = iemail.get_folders(task)
+        jobs = []
+        for folder in folders:
+            ctask = copy.copy(task)
+            ctask[c.folders] = [folder]
+            jobs.append(iemail.OutlookEmailDataLoader(ctask))
+        return jobs
     else:
         assert 0 and "Invalid task"
 
@@ -49,7 +57,7 @@ def _do_run():
     conf_monitor = iconfig.create_conf_monitor(conf_change_handler)
     loader_mgr.add_timer(conf_monitor, time.time(), 10)
 
-    jobs = [create_job(task) for task in tasks]
+    jobs = [job for task in tasks for job in create_jobs(task)]
     loader_mgr.run(jobs)
 
 
