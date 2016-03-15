@@ -3,6 +3,7 @@ from datetime import timedelta
 import time
 import traceback
 import base64
+import re
 import imaplib
 from email.parser import Parser
 import json
@@ -69,9 +70,24 @@ def message_to_json(message):
 
     p = Parser()
     msg = p.parsestr(message[0][1])
+    pat = re.compile(r"<([^>]+\.com)>")
+    sender = msg.get("From").lower()
+    res = pat.search(sender)
+    if res:
+        sender = res.group(1)
+
+    to = msg.get("To")
+    if to:
+        to = to.lower()
+        receivers = pat.findall(to)
+        if not receivers:
+            receivers = to.split(",")
+    else:
+        receivers = to
+
     json_event = {
-        "from": msg.get("From").lower(),
-        "to": msg.get("To").lower(),
+        "from": sender,
+        "to": receivers,
         "subject": msg.get("Subject"),
         "date": msg.get("Date"),
         "thread-topic": msg.get("Thread-Topic"),
@@ -79,7 +95,7 @@ def message_to_json(message):
     return json_event
 
 
-def get_folders(connection):
+def get_folders(connection, ignores=()):
     res, data = connection.list()
     if res != "OK":
         logger.error("Failed to list email folders, reason=%s", res)
@@ -90,8 +106,13 @@ def get_folders(connection):
         if '"/"' not in folder:
             logger.warn("Ignore invalid email folder=%s", folder)
             continue
+
         folder = folder.split('"/"')[1].strip()
+        if folder.lower() in ignores:
+            continue
+
         folders.append(folder)
+    logger.info("Scanning email folders=%s", folders)
     return folders
 
 
@@ -128,8 +149,10 @@ class OutlookEmailDataLoader(object):
         connection = imaplib.IMAP4_SSL(self._config[c.host], 993)
         connection.login(self._config[c.username], self._config[c.password])
         folders = self._config.get(c.folders)
+        ignores = ["drafts", '"deleted items"', '"junk e-mail"', "contacts",
+                   "calendar"]
         if not folders:
-            folders = get_folders(connection)
+            folders = get_folders(connection, ignores)
 
         for folder in folders:
             self._collect_and_index(connection, folder)
