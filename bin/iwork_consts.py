@@ -1,6 +1,7 @@
 server_uri = "server_uri"
 session_key = "session_key"
 name = "name"
+checkpoint_dir = "checkpoint_dir"
 
 splunk_ta_iwork = "Splunk_TA_iwork"
 iwork_log_ns = "splunk_ta_iwork"

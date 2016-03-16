@@ -38,6 +38,9 @@ class IWorkConfig(object):
         tasks = []
         for k in [c.iemail_settings, c.icalendar_settings]:
             if k in stanzas and stanzas[k]:
+                if not stanzas[k][c.username]:
+                    continue
+
                 interval = stanzas[k].get(c.polling_interval, 86400)
                 stanzas[k][c.polling_interval] = int(interval)
                 stanzas[k][c.username] = stanzas[k][c.username].replace(
@@ -51,7 +54,7 @@ class IWorkConfig(object):
         mgr.set_encrypt_keys([c.password])
         for k in [c.iemail_settings, c.icalendar_settings]:
             if k in stanzas and stanzas[k]:
-                if not mgr.is_encrypted(stanzas[k]):
+                if stanzas[k][c.username] and not mgr.is_encrypted(stanzas[k]):
                     mgr.update(stanzas[k])
 
         return tasks
