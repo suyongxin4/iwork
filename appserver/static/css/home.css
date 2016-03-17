@@ -1,5 +1,14 @@
-div.root-view{
+html {
+    width: 100%;
+    height: 100%;
+}
+body {
+    width: 100%;
+    height: 100%;
+}
+div.root-view {
     width: calc(100% - 40px);
+    height: calc(100% - 105px);
     padding: 20px;
 }
 

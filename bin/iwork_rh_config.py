@@ -34,6 +34,8 @@ class WorkConfigHandler(admin.MConfigHandler):
         stanzas = mgr.all(return_acl=False)
         result = {}
         for key in self.valid_params:
+            if key is "password":
+                continue
             result[key] = stanzas[c.iemail_settings].get(key)
 
         conf_info[self.key].append(self.key, json.dumps(result))
