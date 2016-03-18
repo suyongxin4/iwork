@@ -3,13 +3,15 @@ define([
     'underscore',
     'backbone',
     'bootstrap',
-    'd3'
+    'd3',
+    'app/views/PieChart'
 ], function(
     $,
     _,
     Backbone,
     Bootstrap,
-    d3
+    d3,
+    PieChart
 ) {
     var DURATION = 500;
     var PADDING = 30;
@@ -43,6 +45,44 @@ define([
             }
             return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
         };
+    }
+    function getPieChartData(data){
+        if (data.sentTo || data.receivedFrom){
+            return [data.sentTo, data.receivedFrom];
+        } else {
+            return [data.sent, data.received];
+        }
+    }
+
+    function getPalette(data){
+        if (data.sentTo || data.receivedFrom){
+            return ["#c7e9b4", "#225ea8"];
+        } else {
+            return ["#d9f0a3", "#238443"];
+        }
+    }
+
+    function onNodeHover(el, data){
+        d3.event.preventDefault();
+        d3.event.stopPropagation();
+        data.pie = new PieChart({
+            el: $(el),
+            data: getPieChartData(data),
+            palette: getPalette(data),
+            radius: data.radius
+        });
+        data.pie.render();
+        this.showTooltip(el, data);
+    }
+
+    function onNodeUnhover(el, data){
+        d3.event.preventDefault();
+        d3.event.stopPropagation();
+        if (data.pie){
+            data.pie.destroy();
+            delete data.pie;
+        }
+        this.hideTooltip();
     }
 
     return Backbone.View.extend({
@@ -133,7 +173,7 @@ define([
                 fixed: true
             };
             nodes.forEach(function(node) {
-                node.radius = sizeScale(node.total);
+                node.radius = Math.round(sizeScale(node.total));
             });
             nodes.sort(function(a, b){
                 return b.total - a.total;
@@ -173,18 +213,26 @@ define([
             node.exit().remove();
 
             nodeGroup.select(".root-node").attr("opacity", 1).attr("transform", function(d){
+                d.x = d.px;
+                d.y = d.py;
                 return "translate(" + d.px + ", " + d.py + ")";
             });
-            node.each(function(){
+            node.each(function(d){
                 var n = d3.select(this);
                 if (n.classed("root-node")){
                     return;
                 }
                 if (!n.attr("transform")){
                     n.attr("opacity", 0);
+                } else {
+                    var matrix = n.node().getCTM();
+                    d.px = matrix.e;
+                    d.py = matrix.f;
+                    d.x = matrix.e;
+                    d.y = matrix.f;
                 }
             });
-
+            node.on("mouseover", null);
             var circle = node.select("circle");
             if (!circle.node()){
                 circle = node.append("circle");
@@ -253,6 +301,8 @@ define([
                     d.y = Math.max(r, Math.min(height - r, d.y));
                 });
             });
+            var onmouseover = onNodeHover.bind(this);
+            var onmouseleave = onNodeUnhover.bind(this);
             force.on("end", function(){
                 node.each(function(d, i){
                     var n = d3.select(this);
@@ -271,13 +321,23 @@ define([
                         radiusTransition.transition().duration(DURATION)
                             .select(".node:nth-child("+(i+1)+")").attr("opacity", 1);
                     }
+                }).on("mouseenter", function(d, i){
+                    onmouseover(this, d, i);
+                }).on("mouseleave", function(d, i){
+                    onmouseleave(this, d, i);
                 });
             });
             force.start();
-            for (var i = 0; i < 300; ++i){
+            for (var i = 0; i < 100; ++i){
                 force.tick();
             }
             force.stop();
+        },
+        showTooltip: function(){
+
+        },
+        hideTooltip: function(){
+
         },
         size: function(_) {
             if (_.width) {

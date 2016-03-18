@@ -29,6 +29,7 @@ define([
                 this.$("div.hint").hide();
                 var that = this;
                 RequestUtil.sendRequest("save_iwork_settings", {
+                    name: "iwork",
                     iwork_settings: JSON.stringify(data)
                 }).done(function() {
                     that.$("div.hint").show();

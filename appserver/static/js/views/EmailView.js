@@ -42,6 +42,11 @@ define([
         return ret;
     }
 
+    var fromBlackList = [
+        "jira-comments@splunk.com",
+        "confluence@splunk.com"
+    ];
+
     return Backbone.View.extend({
         template: Template,
         initialize: function(options) {
@@ -119,7 +124,8 @@ define([
                 for (var i = 0; i < dp.length; ++i){
                     var fieldFrom = dp.getRowField(i, "from");
                     var fieldTo = dp.getRowField(i, "to");
-                    if (fieldFrom == null || fieldTo == null){
+                    if (fieldFrom == null || fieldTo == null ||
+                        fromBlackList.indexOf(fieldFrom) > -1){
                         continue;
                     }
                     if (fieldFrom.indexOf(me) < 0){
