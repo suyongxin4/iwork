@@ -22,6 +22,19 @@ div.root-view .connection-diagram-container svg.network-chart {
     height: calc(100% - 60px);
     min-height: 480px;
 }
+div.root-view .connection-diagram-container svg.network-chart g.node text{
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+}
+div.root-view .connection-diagram-container svg.network-chart g.node circle{
+    fill: #1f77b4;
+    stroke: #333;
+}
+div.root-view .connection-diagram-container svg.network-chart g.node.root-node circle{
+    fill: #65a637;
+}
+
 div.root-view .connection-diagram-container svg.time-axis {
     height: 60px;
 }

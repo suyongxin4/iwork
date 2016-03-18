@@ -3,44 +3,61 @@ define([
     'underscore',
     'backbone',
     'bootstrap',
-    'd3',
-    'moment',
-    'ElementQueries',
-    'ResizeSensor',
-    "splunkjs/mvc/searchmanager",
-    'contrib/text!app/templates/EmailView.html',
-    'app/views/TimeAxis',
-    'app/views/NetworkChart'
+    'd3'
 ], function(
     $,
     _,
     Backbone,
     Bootstrap,
-    d3,
-    moment,
-    ElementQueries,
-    ResizeSensor,
-    SearchManager,
-    Template,
-    TimeAxis,
-    NetworkChart
+    d3
 ) {
     var DURATION = 500;
     var PADDING = 30;
     var HALF_PADDING = PADDING / 2;
 
+    function collide(node, r) {
+        var nx1 = node.x - r,
+            nx2 = node.x + r,
+            ny1 = node.y - r,
+            ny2 = node.y + r;
+        return function(quad, x1, y1, x2, y2) {
+            if (quad.point && (quad.point !== node)) {
+                var x = node.x - quad.point.x,
+                    y = node.y - quad.point.y,
+                    l = Math.sqrt(x * x + y * y),
+                    r = node.radius + quad.point.radius,
+                    f = quad.point.fixed;
+                if (l < r) {
+                    if (f) {
+                        l = (l - r) / l;
+                        node.x -= x *= l;
+                        node.y -= y *= l;
+                    } else {
+                        l = (l - r) / l * 0.5;
+                        node.x -= x *= l;
+                        node.y -= y *= l;
+                        quad.point.x += x;
+                        quad.point.y += y;
+                    }
+                }
+            }
+            return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+        };
+    }
+
     return Backbone.View.extend({
-        template: Template,
         initialize: function(options) {
             Backbone.View.prototype.initialize.apply(this, arguments);
+            options = options || {};
             this._container = d3.select(this.el);
             this._width = this.$el.width();
             this._height = this.$el.height();
             this._renderWidth = this._width - PADDING;
             this._renderHeight = this._height - PADDING;
+            this._showDataLabel = options.showDataLabel || true;
+
         },
         render: function() {
-            var that = this;
             if (!this._data) {
                 return this;
             }
@@ -49,124 +66,218 @@ define([
             return this;
         },
         calculate: function() {
-            this._nodes = [{
-                name: "You",
-                charge: -50,
-            }];
+            var size = Math.min(this._renderWidth, this._renderHeight);
+            var nodes = [];
+            var sizeScale = d3.scale.linear();
+            sizeScale.range([Math.max(size / 32, 10), size / 8]);
             var sent = this._data.sent;
             var received = this._data.received;
-            var key, value, node;
+            var key, value, node, total;
+            var totalSent = 0,
+                totalReceived = 0,
+                max = 0;
             for (key in sent) {
-                value = sent[key];
+                if (!sent.hasOwnProperty(key)) {
+                    continue;
+                }
+                total = value = sent[key];
+                totalSent += value;
                 node = {
                     name: key,
                     sentTo: value,
                     receivedFrom: 0
                 };
                 if (received.hasOwnProperty(key)) {
-                    node.receivedFrom = received[key];
+                    value = received[key];
+                    node.receivedFrom = value;
+                    total += value;
+                    totalReceived += value;
                 }
-                this._nodes.push(node);
+                node.total = total;
+                if (total > max) {
+                    max = total;
+                }
+                nodes.push(node);
             }
             for (key in received) {
+                if (!received.hasOwnProperty(key)) {
+                    continue;
+                }
                 if (sent.hasOwnProperty(key)) {
                     continue;
                 }
-                value = received[key];
+                total = value = received[key];
+                totalReceived += value;
                 node = {
                     name: key,
                     sentTo: 0,
                     receivedFrom: value
                 };
-                this._nodes.push(node);
-            }
-            this._links = [];
-            this._nodes.forEach(function(node, index) {
-                if (index === 0) {
-                    return;
+                node.total = total;
+                if (total > max) {
+                    max = total;
                 }
-                this._links.push({
-                    source: 0,
-                    target: index,
-                    sentTo: node.sentTo,
-                    receivedFrom: node.receivedFrom
-                });
-            }, this);
+                nodes.push(node);
+            }
+            sizeScale.domain([0, max]);
+
+            this._maxRadius = size / 6;
+            this._rootNode = {
+                name: "You",
+                radius: this._maxRadius,
+                sent: totalSent,
+                received: totalReceived,
+                total: totalSent + totalReceived,
+                px: this._renderWidth / 2,
+                py: this._renderHeight / 2,
+                fixed: true
+            };
+            nodes.forEach(function(node) {
+                node.radius = sizeScale(node.total);
+            });
+            nodes.sort(function(a, b){
+                return b.total - a.total;
+            });
+            this._nodes = nodes.slice(0, 50);
+            this._nodes.unshift(this._rootNode);
+            // this._links = [];
+            // this._nodes.forEach(function(node, index) {
+            //     if (index === 0) {
+            //         return;
+            //     }
+            //     this._links.push({
+            //         source: 0,
+            //         target: index,
+            //         sentTo: node.sentTo,
+            //         receivedFrom: node.receivedFrom
+            //     });
+            // }, this);
         },
         renderNetWork: function() {
+            var nodes = this._nodes;
+            var width = this._renderWidth;
+            var height = this._renderHeight;
             var svg = this._container;
-            var force = d3.layout.force()
-                .nodes(this._nodes)
-                .links(this._links)
-                .charge(function(d) {
-                    if (d.charge) {
-                        return d.charge;
-                    }
-                    return -Math.sqrt(d.sentTo + d.receivedFrom);
-                })
-                .linkDistance(function(d) {
-                    if (!d.sentTo){
-                        return 200;
-                    }
-                    return Math.sqrt(d.sentTo) * 50;
-                })
-                .size([this._renderWidth, this._renderHeight])
-                .start();
+            var maxRadius = this._maxRadius;
 
-            var link = svg.selectAll(".link")
-                .data(this._links);
-            link.enter().append("line")
-                .attr("class", "link")
-                .style("stroke-width", function(d) {
-                    if (!d.receivedFrom){
-                        return 1;
-                    }
-                    return Math.sqrt(d.receivedFrom);
-                })
-                .style("stroke", "#999999");
-            link.exit().remove();
-
-            var node = svg.selectAll(".node")
+            var nodeGroup = svg.select("g.node-group");
+            if (!nodeGroup.node()) {
+                nodeGroup = svg.append("g").classed("node-group", true);
+            }
+            var node = nodeGroup.selectAll(".node")
                 .data(this._nodes);
-            node.enter().append("circle")
-                .attr("class", "node")
-                .attr("r", function(d) {
-                    if (d.charge) {
-                        return 30;
-                    }
-                    return Math.sqrt(d.sentTo + d.receivedFrom)*3;
-                })
-                .style("fill", "#1f77b4")
-                .style("stroke", "#333333")
-                .call(force.drag);
+            node.enter().append("g")
+                .attr("class", function(d, i) {
+                    return i ? "node" : "node root-node";
+                });
             node.exit().remove();
 
-            node.append("title")
-                .text(function(d) {
-                    return d.name;
-                });
-
-            force.on("tick", function() {
-                link.attr("x1", function(d) {
-                        return d.source.x;
-                    })
-                    .attr("y1", function(d) {
-                        return d.source.y;
-                    })
-                    .attr("x2", function(d) {
-                        return d.target.x;
-                    })
-                    .attr("y2", function(d) {
-                        return d.target.y;
-                    });
-
-                node.attr("cx", function(d) {
-                        return d.x;
-                    })
-                    .attr("cy", function(d) {
-                        return d.y;
-                    });
+            nodeGroup.select(".root-node").attr("opacity", 1).attr("transform", function(d){
+                return "translate(" + d.px + ", " + d.py + ")";
             });
+            node.each(function(){
+                var n = d3.select(this);
+                if (n.classed("root-node")){
+                    return;
+                }
+                if (!n.attr("transform")){
+                    n.attr("opacity", 0);
+                }
+            });
+
+            var circle = node.select("circle");
+            if (!circle.node()){
+                circle = node.append("circle");
+            }
+            if (!circle.attr("r")){
+                circle.attr("r", 0);
+            }
+            var radiusTransition = nodeGroup.transition().duration(DURATION);
+            radiusTransition.selectAll(".node").select("circle").attr("r", function(d) {
+                return d.radius - 2;
+            });
+            var title = circle.select("title");
+            if (!title.node()) {
+                title = circle.append("title");
+            }
+            title.text(function(d) {
+                return d.name;
+            });
+
+            var text = node.select("text.text-label");
+            if (!text.node()){
+                if (this._showTextLabel){
+                    text = node.append("text").classed("text-label", true);
+                }
+            } else if (!this._showTextLabel){
+                text.remove();
+            }
+            if (this._showTextLabel){
+                text.text(function(d){
+                    return d.name;
+                }).transition().duration(DURATION / 2).attr("opacity", 0)
+                .transition().duration(DURATION / 2).attr("opacity", 1);
+            }
+
+            text = node.select("text.data-label");
+            if (!text.node()){
+                if (this._showDataLabel){
+                    text = node.append("text").classed("data-label", true);
+                }
+            } else if (!this._showDataLabel){
+                text.remove();
+            }
+            if (this._showDataLabel){
+                text.text(function(d){
+                    return d.total;
+                }).attr("opacity", 0).transition().duration(DURATION).attr("opacity", 1);
+            }
+            var force = d3.layout.force()
+                .nodes(nodes)
+                // .links(this._links)
+                .gravity(0.05)
+                // .charge(-2000)
+                .charge(function(d, i) {
+                    return i ? 0 : -1500;
+                })
+                .size([width, height]);
+            force.on("tick", function() {
+                var q = d3.geom.quadtree(nodes),
+                i = 0,
+                n = nodes.length;
+
+                while (++i < n) q.visit(collide(nodes[i], nodes[i].radius + maxRadius));
+                node.each(function(d){
+                    var r = d.radius;
+                    d.x = Math.max(r, Math.min(width - r, d.x));
+                    d.y = Math.max(r, Math.min(height - r, d.y));
+                });
+            });
+            force.on("end", function(){
+                node.each(function(d, i){
+                    var n = d3.select(this);
+                    if (n.classed("root-node")){
+                        return;
+                    }
+                    if (n.attr("transform")){
+                        radiusTransition.transition().duration(DURATION)
+                            .select(".node:nth-child("+(i+1)+")").attr("transform", function(d) {
+                                return "translate(" + d.x + ", " + d.y + ")";
+                            }).attr("opacity", 1);
+                    } else {
+                        n.attr("transform", function(d) {
+                            return "translate(" + d.x + ", " + d.y + ")";
+                        });
+                        radiusTransition.transition().duration(DURATION)
+                            .select(".node:nth-child("+(i+1)+")").attr("opacity", 1);
+                    }
+                });
+            });
+            force.start();
+            for (var i = 0; i < 300; ++i){
+                force.tick();
+            }
+            force.stop();
         },
         size: function(_) {
             if (_.width) {

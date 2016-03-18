@@ -1,0 +1,17 @@
+{
+    "bitwise": true,
+    "eqeqeq": true,
+    "forin": true,
+    "noarg": true,
+    "undef": true,
+    "unused": true,
+    "eqnull": true,
+    "loopfunc": true,
+    "globals": {
+        "define": false,
+        "require": false,
+        "window": true,
+        "document": true,
+        "FileReader": false
+    }
+}

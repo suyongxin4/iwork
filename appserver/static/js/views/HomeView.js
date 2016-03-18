@@ -7,7 +7,8 @@ define([
     'moment',
     'fullcalendar',
     "splunkjs/mvc/searchmanager",
-    'contrib/text!app/templates/HomeView.html'
+    'contrib/text!app/templates/HomeView.html',
+    'app/utils/DataParser'
 ], function(
     $,
     _,
@@ -17,52 +18,9 @@ define([
     moment,
     Fullcalendar,
     SearchManager,
-    Template
+    Template,
+    DataParser
 ) {
-    function getUniqueRows(rows){
-        var dict = {};
-        var dedupedRows = [];
-        rows.forEach(function(row){
-            var key = row.slice(0, 3).join("");
-            if (dict[key]){
-                return;
-            }
-            dict[key] = true;
-            dedupedRows.push(row);
-        });
-        return dedupedRows;
-    }
-
-    function DataParser(data){
-        this._data = data;
-        this._fields = data.fields;
-        this._rows = getUniqueRows(data.rows);
-        this.length = this._rows.length;
-        this._rowObjects = [];
-        this._rowObjects.length = this.length;
-    }
-
-    DataParser.prototype.getRowField = function(idx, fieldName){
-        if (!this._rowObjects[idx]){
-            this.getRowObject(idx);
-        }
-        return this._rowObjects[idx][fieldName];
-    };
-
-    DataParser.prototype.getRowObject = function(idx){
-        if (this._rowObjects[idx]){
-            return this._rowObjects[idx];
-        }
-        var obj = {};
-        var row = this._rows[idx];
-        var fields = this._fields;
-        row.forEach(function(value, index){
-            obj[fields[index]] = value;
-        });
-        this._rowObjects[idx] = obj;
-        return obj;
-    };
-
     function generateBuckets(start, end){
         var buckets = {};
         while (start.isBefore(end)){
@@ -92,7 +50,7 @@ define([
             });
             return this;
         },
-        onViewRender: function(view, element) {
+        onViewRender: function(view) {
             var viewMoment = view.calendar.getDate();
             this.decorateCalendar(viewMoment.clone().startOf("month"),
                 viewMoment.clone().endOf("month"));

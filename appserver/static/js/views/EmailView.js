@@ -9,6 +9,8 @@ define([
     'ResizeSensor',
     "splunkjs/mvc/searchmanager",
     'contrib/text!app/templates/EmailView.html',
+    'app/utils/DataParser',
+    'app/utils/RequestUtil',
     'app/views/TimeAxis',
     'app/views/NetworkChart'
 ], function(
@@ -22,16 +24,16 @@ define([
     ResizeSensor,
     SearchManager,
     Template,
+    DataParser,
+    RequestUtil,
     TimeAxis,
     NetworkChart
 ) {
-    var ME = "ysu@splunk.com";
-
     function getTimeLabels(){
         var current = moment();
         current.startOf("month");
-        lastMonth = current.clone().subtract(1, "month");
-        lastYear = current.clone().subtract(1, "year");
+        var lastMonth = current.clone().subtract(1, "month");
+        var lastYear = current.clone().subtract(1, "year");
         var ret = [];
         while (lastYear.isSameOrBefore(lastMonth)){
             ret.push(lastYear.format("YYYY-MM"));
@@ -39,49 +41,6 @@ define([
         }
         return ret;
     }
-    function getUniqueRows(rows){
-        var dict = {};
-        var dedupedRows = [];
-        rows.forEach(function(row){
-            var key = row.slice(0, 4).join("");
-            if (dict[key]){
-                return;
-            }
-            dict[key] = true;
-            dedupedRows.push(row);
-        });
-        return dedupedRows;
-    }
-
-    function DataParser(data){
-        this._data = data;
-        this._fields = data.fields;
-        this._rows = getUniqueRows(data.rows);
-        this.length = this._rows.length;
-        this._rowObjects = [];
-        this._rowObjects.length = this.length;
-    }
-
-    DataParser.prototype.getRowField = function(idx, fieldName){
-        if (!this._rowObjects[idx]){
-            this.getRowObject(idx);
-        }
-        return this._rowObjects[idx][fieldName];
-    };
-
-    DataParser.prototype.getRowObject = function(idx){
-        if (this._rowObjects[idx]){
-            return this._rowObjects[idx];
-        }
-        var obj = {};
-        var row = this._rows[idx];
-        var fields = this._fields;
-        row.forEach(function(value, index){
-            obj[fields[index]] = value;
-        });
-        this._rowObjects[idx] = obj;
-        return obj;
-    };
 
     return Backbone.View.extend({
         template: Template,
@@ -89,8 +48,23 @@ define([
             Backbone.View.prototype.initialize.apply(this, arguments);
             this._compiledTemplate = _.template(this.template);
             this._options = options;
+            this._me = null;
         },
         render: function() {
+            var render = this._render.bind(this);
+            var that = this;
+            if (this._me == null){
+                RequestUtil.sendRequest("get_iwork_settings")
+                    .done(function(response){
+                        var settings = JSON.parse(response.entry[0].content.iwork_settings);
+                        that._me = settings.username;
+                        render();
+                    });
+            } else {
+                render();
+            }
+        },
+        _render: function(){
             var that = this;
             this.$el.html(this._compiledTemplate({}));
             var labels = getTimeLabels();
@@ -129,7 +103,7 @@ define([
             var range = this._range;
             var sm = new SearchManager({
                 id: _.uniqueId("email"),
-                search: "* sourcetype=iwork:email | fields date, from, to, subject, thread-topic",
+                search: "* sourcetype=iwork:email",
                 earliest_time: moment(range[0]).startOf("month").toISOString(),
                 latest_time: moment(range[1]).endOf("month").toISOString(),
             });
@@ -137,14 +111,18 @@ define([
                 count: 0,
                 offset: 0
             });
+            var me = this._me;
             results.on("data", function(model, data) {
                 var dp = new DataParser(data);
                 var dataReceived = {};
                 var dataSent = {};
                 for (var i = 0; i < dp.length; ++i){
                     var fieldFrom = dp.getRowField(i, "from");
-                    fieldFrom = fieldFrom.trim().replace(/[\n\"]/gm, "").replace(/\t/gm, " ");
-                    if (fieldFrom.indexOf(ME) < 0){
+                    var fieldTo = dp.getRowField(i, "to");
+                    if (fieldFrom == null || fieldTo == null){
+                        continue;
+                    }
+                    if (fieldFrom.indexOf(me) < 0){
                         // Sent to me.
                         if (!dataReceived[fieldFrom]){
                             dataReceived[fieldFrom] = 0;
@@ -152,11 +130,7 @@ define([
                         dataReceived[fieldFrom]++;
                     } else {
                         // Sent by me.
-                        var fieldTo = dp.getRowField(i, "to");
-                        fieldTo = fieldTo.trim().replace(/[\n\"]/gm, "").replace(/\t/gm, " ");
-                        var recipients = fieldTo.split(",");
-                        recipients.forEach(function(r){
-                            r = r.trim();
+                        fieldTo.forEach(function(r){
                             if (!dataSent[r]){
                                 dataSent[r] = 0;
                             }
