@@ -63,26 +63,39 @@ def fetch(connection, msg_id):
     return None
 
 
-def message_to_json(message):
+def message_to_json(message, ckpt, raw=False):
     if not message[0]:
         logger.warn("Got invalid message=%s", message)
         return None
 
     p = Parser()
     msg = p.parsestr(message[0][1])
-    pat = re.compile(r"<([^>]+\.com)>")
+    pat = re.compile(r"\"?([a-zA-Z0-9\s\.@]*)\"?\s*<([^>]+\.com)>")
     sender = msg.get("From")
-    if sender:
-        sender = sender.lower()
+    name = sender
+    if sender and not raw:
         res = pat.search(sender)
         if res:
-            sender = res.group(1)
+            name, sender = res.group(1).strip(), res.group(2).strip().lower()
+            if name:
+                ckpt.update(name, sender)
+            else:
+                logger.warn("Unmatched from=%s", msg.get("From"))
 
     receivers = msg.get("To")
-    if receivers:
-        receivers = receivers.lower()
+    if receivers and not raw:
         receivers = pat.findall(receivers)
-        if not receivers:
+        if receivers:
+            res = []
+            for name, email in receivers:
+                name, email = name.strip(), email.lower().strip()
+                res.append(email)
+                if name:
+                    ckpt.update(name.strip(), email.strip())
+                else:
+                    logger.warn("Unmatched to=%s", email)
+            receivers = res
+        else:
             receivers = msg.get("To").split(",")
 
     json_event = {
@@ -207,7 +220,7 @@ class OutlookEmailDataLoader(object):
             if data is None:
                 continue
 
-            msg = message_to_json(data)
+            msg = message_to_json(data, self._config["ckpt"])
             if msg is not None:
                 emails.append(msg)
         logger.info("End of collecting email data for folder=%s, filters=%s",
