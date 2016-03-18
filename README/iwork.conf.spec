@@ -7,6 +7,7 @@ username = kchen@splunk.com
 password = ******
 start_date = 2010-01-01
 polling_interval = 86400
+folders = folders, separated by ","
 index = main
 
 [icalendar_settings]

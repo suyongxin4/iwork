@@ -178,4 +178,4 @@ if __name__ == "__main__":
 
     # for chart in charts:
     #    print json.dumps(chart)
-    json.dump(charts, open("report.csv", "w"))
+    json.dump(charts, open("report.json", "w"))

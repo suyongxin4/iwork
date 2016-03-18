@@ -19,7 +19,17 @@ class BaseStateStore(object):
         self._meta_configs = meta_configs
         self._appname = appname
 
-    def update_state(self, key, states):
+    def update_state(self, key, state):
+        pass
+
+    def update_state_in_batch(self, states):
+        """
+        :param states: a list of dict which contains
+        {
+        "_key": xxx,
+        "value": json_states,
+        }
+        """
         pass
 
     def get_state(self, key):
@@ -42,56 +52,66 @@ class StateStore(BaseStateStore):
         """
         super(StateStore, self).__init__(meta_configs, appname)
 
-        # State cache is a dict from _key to value
-        self._states_cache = {}
         self._kv_client = None
         self._collection = collection_name
         self._kv_client = kvc.KVClient(meta_configs["server_uri"],
                                        meta_configs["session_key"])
         kvc.create_collection(self._kv_client, self._collection, self._appname)
-        self._load_states_cache()
 
-    def update_state(self, key, states):
+    def update_state(self, key, state):
         """
         :state: Any JSON serializable
         :return: None if successful, otherwise throws exception
         """
 
-        if key not in self._states_cache:
+        val = self.get_state(key)
+        if val is None:
             self._kv_client.insert_collection_data(
-                self._collection, {"_key": key, "value": json.dumps(states)},
+                self._collection, {"_key": key, "value": json.dumps(state)},
                 self._appname)
         else:
             self._kv_client.update_collection_data(
-                self._collection, key, {"value": json.dumps(states)},
+                self._collection, key, {"value": json.dumps(state)},
                 self._appname)
-        self._states_cache[key] = states
 
-    def get_state(self, key=None):
-        if key:
-            return self._states_cache.get(key, None)
-        return self._states_cache
+    def update_state_in_batch(self, states):
+        self._kv_client.update_collection_data_in_batch(
+            self._collection, states, self._appname)
 
-    def delete_state(self, key=None):
-        if key:
-            self._delete_state(key)
+    def delete_state(self, key):
+        try:
+            self._kv_client.delete_collection_data(
+                self._collection, key, self._appname)
+        except kvc.KVNotExists:
+            pass
+
+    def get_state(self, key):
+        try:
+            state = self._kv_client.get_collection_data(
+                self._collection, key, self._appname)
+        except kvc.KVNotExists:
+            return None
+
+        if "value" in state:
+            value = state["value"]
         else:
-            [self._delete_state(key) for key in self._states_cache.keys()]
+            value = state
 
-    def _delete_state(self, key):
-        if key not in self._states_cache:
-            return
+        try:
+            value = json.loads(value)
+        except Exception:
+            pass
 
-        self._kv_client.delete_collection_data(
-            self._collection, key, self._appname)
-        del self._states_cache[key]
+        return value
 
-    def _load_states_cache(self):
+    def get_all_states(self):
         states = self._kv_client.get_collection_data(
             self._collection, None, self._appname)
+
         if not states:
             return
 
+        ckpts = {}
         for state in states:
             if "value" in state:
                 value = state["value"]
@@ -103,10 +123,15 @@ class StateStore(BaseStateStore):
             except Exception:
                 pass
 
-            self._states_cache[state["_key"]] = value
+            ckpts[state["_key"]] = value
+        return ckpts
+
+    def delete_all_states(self):
+        self._kv_client.delete_collection(self._collection, self._appname)
 
 
 class FileStateStore(BaseStateStore):
+
     def __init__(self, meta_configs, appname):
         """
         :meta_configs: dict like and contains checkpoint_dir, session_key,
@@ -115,7 +140,7 @@ class FileStateStore(BaseStateStore):
 
         super(FileStateStore, self).__init__(meta_configs, appname)
 
-    def update_state(self, key, states):
+    def update_state(self, key, state):
         """
         :state: Any JSON serializable
         :return: None if successful, otherwise throws exception
@@ -123,29 +148,86 @@ class FileStateStore(BaseStateStore):
 
         fname = op.join(self._meta_configs["checkpoint_dir"], key)
         with open(fname + ".new", "w") as jsonfile:
-            json.dump(states, jsonfile)
+            json.dump(state, jsonfile)
+            jsonfile.flush()
 
         if op.exists(fname):
-            os.remove(fname)
+            try:
+                os.remove(fname)
+            except IOError:
+                pass
 
         os.rename(fname + ".new", fname)
-        # commented this to disable state cache for local file
-        # if key not in self._states_cache:
-        # self._states_cache[key] = {}
-        # self._states_cache[key] = states
+
+    def update_state_in_batch(self, states):
+        for state in states:
+            self.update_state(state["_key"], state["value"])
 
     def get_state(self, key):
         fname = op.join(self._meta_configs["checkpoint_dir"], key)
         if op.exists(fname):
-            with open(fname) as jsonfile:
-                state = json.load(jsonfile)
-                # commented this to disable state cache for local file
-                # self._states_cache[key] = state
-                return state
+            try:
+                with open(fname) as jsonfile:
+                    state = json.load(jsonfile)
+                    return state
+            except IOError:
+                return None
         else:
             return None
 
     def delete_state(self, key):
         fname = op.join(self._meta_configs["checkpoint_dir"], key)
         if op.exists(fname):
-            os.remove(fname)
+            try:
+                os.remove(fname)
+            except IOError:
+                pass
+
+    def get_all_states(self):
+        return None
+
+    def delete_all_states(self):
+        pass
+
+
+if __name__ == "__main__":
+    mystate = {
+        "x": "y",
+    }
+    key = "hello"
+    states = [{"_key": "h", "value": "i"}, {"_key": "j", "value": "k"}]
+
+    collection = "testing"
+    config = {
+        "use_kv_store": False,
+        "checkpoint_dir": ".",
+        "server_uri": "https://localhost:8089",
+        "session_key": os.environ["session_key"],
+    }
+
+    appname = "Splunk_TA_aws"
+
+    for use_kv in (False, True):
+        store = get_state_store(config, appname, collection, use_kv)
+        store.delete_state(key)
+
+        res = store.get_state(key)
+        assert(res is None)
+
+        store.update_state(key, mystate)
+        res = store.get_state(key)
+        assert "x" in res and res["x"] == "y"
+
+        store.delete_state(key)
+        res = store.get_state(key)
+        assert(res is None)
+
+        store.update_state_in_batch(states)
+        for state in states:
+            s = store.get_state(state["_key"])
+            assert s == state["value"]
+            store.delete_state(state["_key"])
+
+    collection = "pithoslogreader_pithoslabs-logs-infra5719"
+    store = get_state_store(config, appname, collection, True)
+    store._kv_client.delete_collection(collection, appname)
