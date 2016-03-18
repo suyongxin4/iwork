@@ -14,6 +14,7 @@ from splunktalib.common import log
 logger = log.Logs(c.iwork_log_ns).get_logger(c.iwork_log)
 
 
+import splunktalib.state_store as ss
 import splunktalib.common.pattern as scp
 import splunktalib.data_loader_mgr as dlm
 import ta_common as tac

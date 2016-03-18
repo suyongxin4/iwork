@@ -27,3 +27,10 @@ class WorkCheckpointer(object):
     def set_end_date(self, key, edate):
         edate = datetime.strftime(edate, self._time_fmt)
         self._ckpt.update_state(key, {"end_date": edate})
+
+
+class EmployeeDetailLookup(object):
+
+    def __init__(self, config):
+        self._config = config
+        pass

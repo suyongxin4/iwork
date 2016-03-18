@@ -1,5 +1,6 @@
 import xml.etree.cElementTree as xee
 import json
+import csv
 
 
 def parse_org_chart(org_chart_file):
@@ -63,13 +64,26 @@ def children(parent, employees, ignores):
     return []
 
 
+def create_one_chart(emp, manager):
+    chart = {
+        "name": emp["name"],
+        "manager": manager["name"],
+        "department": None,
+        "location": None,
+        "email": None,
+    }
+    return chart
+
+
 def generate_report(employee_pages):
+    charts = []
     for employees in employee_pages:
         sorted_ones = sorted(employees, cmp=lambda x, y: x["top"] - y["top"])
         highest = sorted_ones[0]
         seconds = []
         solars = []
 
+        # print highest["name"]
         for i in xrange(1, len(sorted_ones)):
             sibs = siblings(sorted_ones[i], sorted_ones, i + 1)
             if len(sibs) > 1:
@@ -79,10 +93,12 @@ def generate_report(employee_pages):
                 solars.extend(sibs)
 
         for solar in solars:
-            print "{}, {}".format(solar["name"], highest["name"])
+            charts.append(create_one_chart(solar, highest))
+            # print solar["name"]
 
         for second in seconds:
-            print "{}, {}".format(second["name"], highest["name"])
+            charts.append(create_one_chart(second, highest))
+            # print second["name"]
 
         found_kids = False
         for second in seconds:
@@ -91,15 +107,62 @@ def generate_report(employee_pages):
                 found_kids = True
 
             for kid in kids:
-                print "{}, {}".format(kid["name"], second["name"])
+                charts.append(create_one_chart(kid, second))
 
         if not found_kids:
             ignores = set(s["name"] for s in seconds)
             ignores.update(set(s["name"] for s in solars))
             ignores.add(highest["name"])
             for emp in employees:
-                if emp["name"] not in ignores:
-                    print "{}, {}".format(emp["name"], highest["name"])
+                if emp["name"] in ignores:
+                    continue
+
+                charts.append(create_one_chart(emp, highest))
+    return charts
+
+
+def load_high_profiles(csv_file):
+    profiles = {}
+    with open(csv_file) as f:
+        reader = csv.reader(f, delimiter=",", quotechar='"')
+        for lin in reader:
+            profiles[lin[0]] = {
+                "name": lin[0],
+                "location": lin[1],
+                "department": lin[2],
+                "email": lin[3],
+            }
+    return profiles
+
+
+def find_boss(chart, charts):
+    for c in charts:
+        if c["name"] == chart["manager"]:
+            return c
+    return None
+
+
+def fill_missing_info(charts, profiles):
+    for chart in charts:
+        name = chart["name"]
+        if name in profiles:
+            chart["location"] = profiles[name]["location"]
+            chart["department"] = profiles[name]["department"]
+            chart["email"] = profiles[name]["email"]
+        else:
+            my_chart = chart
+            while 1:
+                boss = find_boss(my_chart, charts)
+                if not boss:
+                    break
+
+                name = boss["name"]
+                if name in profiles:
+                    chart["location"] = profiles[name]["location"]
+                    chart["department"] = profiles[name]["department"]
+                    break
+                else:
+                    my_chart = boss
 
 
 if __name__ == "__main__":
@@ -109,4 +172,10 @@ if __name__ == "__main__":
     # 4) run generate_orgchart.py
 
     pages = parse_org_chart("org.xml.filtered")
-    generate_report(pages)
+    charts = generate_report(pages)
+    profiles = load_high_profiles("heads")
+    fill_missing_info(charts, profiles)
+
+    # for chart in charts:
+    #    print json.dumps(chart)
+    json.dump(charts, open("report.csv", "w"))
