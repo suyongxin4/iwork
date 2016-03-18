@@ -28,11 +28,11 @@ div.root-view .connection-diagram-container svg.network-chart g.node text{
     pointer-events: none;
 }
 div.root-view .connection-diagram-container svg.network-chart g.node circle{
-    fill: #1f77b4;
+    fill: #41b6c4;
     stroke: #333;
 }
 div.root-view .connection-diagram-container svg.network-chart g.node.root-node circle{
-    fill: #65a637;
+    fill: #78c679;
 }
 
 div.root-view .connection-diagram-container svg.time-axis {
@@ -57,5 +57,5 @@ div.root-view .connection-diagram-container svg.time-axis .indicator rect.indica
 }
 div.root-view .connection-diagram-container svg.time-axis .indicator circle {
     cursor: col-resize;
-    fill: #0078ff;
+    fill: #41b6c4;
 }

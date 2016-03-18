@@ -59,6 +59,23 @@ class WorkConfigHandler(admin.MConfigHandler):
             mgr.update(settings)
         logger.info("end of editing iwork settings")
 
+    @scp.catch_all(logger)
+    def handleCreate(self, conf_info):
+        logger.info("start creating iwork settings")
+        if not self.callerArgs or not self.callerArgs.get(self.key):
+            logger.error("Missing iwork settings")
+            raise Exception("Missing iwork settings")
+
+        mgr = tcm.TAConfManager(
+            c.iwork, scc.getMgmtUri(), self.getSessionKey(),
+            c.splunk_ta_iwork)
+        mgr.set_encrypt_keys([c.password])
+
+        settings = json.loads(self.callerArgs[self.key][0])
+        for stanza_name in (c.iemail_settings, c.icalendar_settings):
+            settings[c.name] = stanza_name
+            mgr.update(settings)
+        logger.info("end of creating iwork settings")
 
 def main():
     admin.init(WorkConfigHandler, admin.CONTEXT_NONE)

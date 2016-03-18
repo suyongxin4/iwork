@@ -18,3 +18,7 @@ div.root-view .form-configure{
 div.root-view .form-configure .action-control-group{
     margin-left: 180px;
 }
+div.root-view .form-configure .hint{
+    margin-left: 180px;
+    color: #65a637;
+}
