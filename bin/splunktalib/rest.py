@@ -4,23 +4,68 @@ from traceback import format_exc
 import sys
 import os.path as op
 
-sys.path.insert(0, op.dirname(op.abspath(__file__)))
+sys.path.insert(0, op.dirname((op.abspath(__file__))))
 
 import splunktalib.common.util as scu
 import splunktalib.common.log as log
+import splunktalib.common.pattern as scp
 
 logger = log.Logs().get_logger("util")
 
 from httplib2 import (socks, ProxyInfo, Http)
 
 
-def splunkd_request(splunkd_uri, session_key, method="GET",
-                    headers=None, data=None, timeout=30, retry=1):
+def splunkd_request(splunkd_uri, session_key, method="GET", headers=None,
+                    data=None, timeout=30, retry=1, http=None):
     """
     :return: httplib2.Response and content
     """
 
+    if http is None:
+        return httplib2_request(
+            splunkd_uri, session_key, method, headers, data, timeout, retry)
+    else:
+        return urllib3_request(
+            http, splunkd_uri, session_key, method, headers,
+            data, timeout, retry)
+
+
+def httplib2_request(splunkd_uri, session_key, method="GET", headers=None,
+                     data=None, timeout=30, retry=1):
+    http = Http(timeout=timeout, disable_ssl_certificate_validation=True)
+
+    def httplib2_req(splunkd_uri, method, headers, data, timeout):
+        resp, content = http.request(
+            splunkd_uri, method=method, headers=headers, body=data)
+        return resp, content
+
+    return do_splunkd_request(splunkd_uri, session_key, method, headers,
+                              data, timeout, retry, httplib2_req)
+
+
+def urllib3_request(http, splunkd_uri, session_key, method="GET",
+                    headers=None, data=None, timeout=30, retry=1):
+    """
+    use urllib3, http can be connection pooling manager
+    :return: HTTPSResponse and content
+    """
+
+    def urllib3_req(splunkd_uri, method, headers, data, timeout):
+        resp = http.request(method, splunkd_uri, body=data, headers=headers,
+                            retries=1, timeout=timeout, release_conn=False,
+                            preload_content=True)
+        content = resp.data
+        return resp, content
+
+    return do_splunkd_request(splunkd_uri, session_key, method, headers,
+                              data, timeout, retry, urllib3_req)
+
+
+def do_splunkd_request(splunkd_uri, session_key, method, headers,
+                       data, timeout, retry, http_req):
     headers = headers if headers is not None else {}
+    headers["Connection"] = "keep-alive"
+    headers["User-Agent"] = "curl/7.29.0"
     headers["Authorization"] = "Splunk {0}".format(session_key)
     content_type = headers.get("Content-Type")
     if not content_type:
@@ -30,30 +75,29 @@ def splunkd_request(splunkd_uri, session_key, method="GET",
         content_type = "application/x-www-form-urlencoded"
         headers["Content-Type"] = content_type
 
-    if data is not None:
+    if data is not None and not isinstance(data, basestring):
         if content_type == "application/json":
             data = json.dumps(data)
         else:
             data = urllib.urlencode(data)
 
-    http = Http(timeout=timeout, disable_ssl_certificate_validation=True)
     msg_temp = "Failed to send rest request=%s, errcode=%s, reason=%s"
     resp, content = None, None
-    for _ in range(retry):
+    for _ in xrange(retry):
         try:
-            resp, content = http.request(splunkd_uri, method=method,
-                                         headers=headers, body=data)
+            resp, content = http_req(splunkd_uri, method, headers,
+                                     data, timeout)
         except Exception:
             logger.error(msg_temp, splunkd_uri, "unknown", format_exc())
         else:
             if resp.status not in (200, 201):
-                if not (method == "GET" and resp.status == 404):
+                if method != "GET" and resp.status != 404:
                     logger.error(msg_temp, splunkd_uri, resp.status,
                                  code_to_msg(resp, content))
             else:
-                return resp, content
-    else:
-        return resp, content
+                break
+
+    return resp, content
 
 
 def code_to_msg(resp, content):
@@ -125,3 +169,18 @@ def build_http_connection(config, timeout=120, disable_ssl_validation=False):
     if config.get("username") and config.get("password"):
         http.add_credentials(config["username"], config["password"])
     return http
+
+
+class HttpPoolManager(object):
+
+    __metaclass__ = scp.SingletonMeta
+
+    import urllib3
+    urllib3.disable_warnings()
+
+    def __init__(self, config):
+        maxsize = int(config.get("max_pool_size", 70))
+        self._pool = self.urllib3.PoolManager(maxsize=maxsize)
+
+    def pool(self):
+        return self._pool

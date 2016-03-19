@@ -6,6 +6,8 @@ This is the main entry point for iWork TA
 
 import time
 import copy
+import os.path as op
+import json
 
 import iwork_consts as c
 from splunktalib.common import log
@@ -17,6 +19,7 @@ logger = log.Logs(c.iwork_log_ns).get_logger(c.iwork_log)
 import splunktalib.common.pattern as scp
 import splunktalib.data_loader_mgr as dlm
 import ta_common as tac
+import iwork_checkpointer as ckpt
 
 import iwork_config as iconfig
 import iemail
@@ -32,15 +35,29 @@ def create_jobs(task):
         return [icalendar.OutlookCalendarDataLoader(task)]
     elif task[c.name] == c.iemail_settings:
         # Expand email by folder
-        folders = iemail.get_folders(task)
+        if task.get(c.folders):
+            folders = task[c.folders].split(",")
+        else:
+            folders = iemail.get_folders(task)
+
+        store = ckpt.EmployeeDetailLookup(task)
         jobs = []
         for folder in folders:
             ctask = copy.copy(task)
             ctask[c.folders] = [folder]
+            ctask["ckpt"] = store
             jobs.append(iemail.OutlookEmailDataLoader(ctask))
         return jobs
     else:
         assert 0 and "Invalid task"
+
+
+def batch_insert(config):
+    curdir = op.dirname(op.abspath(__file__))
+    with open(op.join(curdir, "report.json")) as f:
+        charts = json.load(f)
+
+    ckpt.insert_all_emps(config, charts)
 
 
 @scp.catch_all(logger)
@@ -51,6 +68,7 @@ def _do_run():
         logger.info("No data input has been configured, exiting...")
         return
 
+    batch_insert(config.metas())
     loader_mgr = dlm.create_data_loader_mgr(config.metas())
     tac.setup_signal_handler(loader_mgr, logger)
     conf_change_handler = tac.get_file_change_handler(loader_mgr, logger)

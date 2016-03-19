@@ -1,6 +1,7 @@
 import re
 import json
 from xml.etree import cElementTree as et
+import urllib
 
 import splunktalib.rest as rest
 
@@ -19,9 +20,10 @@ class KVNotExists(KVException):
 
 class KVClient(object):
 
-    def __init__(self, splunkd_host, session_key):
+    def __init__(self, splunkd_host, session_key, http=None):
         self._splunkd_host = splunkd_host
         self._session_key = session_key
+        self._http = http
 
     def create_collection(self, collection, app, owner="nobody"):
         """
@@ -120,6 +122,22 @@ class KVClient(object):
                              content_type="application/json")
         return json.loads(k)
 
+    def update_collection_data_in_batch(self, collection, data, app,
+                                        owner="nobody"):
+        """
+        :collection: collection name
+        :data: a list of json dict. If the dict contains _key, it may do a
+               update if the _key already exists. Otherwise it does an insert
+        :key_id: key ids returned when creation or replace
+        :return: key ids if successful otherwise throws KV exception
+        """
+
+        uri = self._get_data_endpoint(app, owner, collection, None)
+        uri = "{uri}/batch_save".format(uri=uri)
+        keys = self._do_request(uri, "POST", data,
+                                content_type="application/json")
+        return json.loads(keys)
+
     def get_collection_data(self, collection, key_id, app, owner="nobody"):
         """
         :collection: collection name
@@ -140,8 +158,9 @@ class KVClient(object):
                     content_type="application/x-www-form-urlencoded"):
         headers = {"Content-Type": content_type}
 
-        resp, content = rest.splunkd_request(uri, self._session_key,
-                                             method, headers, data)
+        resp, content = rest.splunkd_request(
+            uri, self._session_key, method, headers, data, http=self._http)
+
         if resp is None and content is None:
             raise KVException("Failed uri={0}, data={1}".format(uri, data))
 
@@ -169,6 +188,15 @@ class KVClient(object):
 
         if not owner:
             owner = "-"
+
+        app = urllib.quote(app.encode("utf-8"), "")
+        owner = urllib.quote(owner.encode("utf-8"), "")
+
+        if collection:
+            collection = urllib.quote(collection.encode("utf-8"), "")
+
+        if key_id:
+            key_id = urllib.quote(key_id.encode("utf-8"), "")
 
         uri = uri_template.format(self._splunkd_host, owner, app)
 
