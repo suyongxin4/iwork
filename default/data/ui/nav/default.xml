@@ -1,8 +1,8 @@
 <nav search_view="search" color="#65A637">
 
-<view name="Home" default="true" label="Home" />
+<view name="Meeting" default="false" label="Meeting" />
 <view name="Email" default="true" label="Email" />
 <view name="search" default="false" label="Search" />
-<view name="Configure" default="true" label="Configure" />
+<view name="Configuration" default="false" label="Configuration" />
 
 </nav>

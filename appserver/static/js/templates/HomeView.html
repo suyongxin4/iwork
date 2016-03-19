@@ -1,4 +1,8 @@
 <div class="calendar-container">
-    <div class="calendar"></div>
+    <div class="calendar">
+        <% monthLabels.forEach(function(label){ %>
+            <div class="month-view" name="<%- label %>"></div>
+        <% }); %>
+    </div>
     <div class="heat-indicator"></div>
 </div>

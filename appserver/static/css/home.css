@@ -13,11 +13,23 @@ div.root-view {
 }
 
 .calendar{
-    width: 600px;
-    height: 490px;
+    width: 910px;
     float: left;
 }
-
+.calendar .month-view{
+    float: left;
+    width: 225px;
+    height: 200px;
+}
+.calendar .month-view .fc-toolbar{
+    margin-bottom: 5px;
+}
+.calendar .month-view .fc-toolbar h2{
+    font-size: 14px;
+}
+.calendar .month-view .fc-body .fc-row {
+    min-height: 20px;
+}
 .heat-indicator{
     background: #0000ff; /* Old browsers */
     background: -moz-linear-gradient(top,  #0000ff 0%, #00ffff 25%, #00ff00 50%, #ffff00 75%, #ff0000 100%); /* FF3.6-15 */

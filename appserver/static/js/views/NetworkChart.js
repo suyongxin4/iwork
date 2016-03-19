@@ -56,7 +56,7 @@ define([
 
     function getPalette(data){
         if (data.sentTo || data.receivedFrom){
-            return ["#c7e9b4", "#225ea8"];
+            return ["#ccebc5", "#2b8cbe"];
         } else {
             return ["#d9f0a3", "#238443"];
         }
@@ -210,7 +210,12 @@ define([
                 .attr("class", function(d, i) {
                     return i ? "node" : "node root-node";
                 });
-            node.exit().remove();
+            node.exit().each(function(d){
+                if (d.pie){
+                    d.pie.destroy();
+                    delete d.pie;
+                }
+            }).remove();
 
             nodeGroup.select(".root-node").attr("opacity", 1).attr("transform", function(d){
                 d.x = d.px;
@@ -218,6 +223,10 @@ define([
                 return "translate(" + d.px + ", " + d.py + ")";
             });
             node.each(function(d){
+                if (d.pie){
+                    d.pie.destroy();
+                    delete d.pie;
+                }
                 var n = d3.select(this);
                 if (n.classed("root-node")){
                     return;
