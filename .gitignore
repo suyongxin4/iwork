@@ -2,3 +2,4 @@
 *.pyo
 local/
 /metadata/local.meta
+/bin/report.json

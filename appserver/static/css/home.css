@@ -11,48 +11,77 @@ div.root-view {
     height: calc(100% - 105px);
     padding: 20px;
 }
-
-.calendar{
-    width: 910px;
+.calendar {
+    width: 740px;
     float: left;
 }
-.calendar .month-view{
+.calendar .month-view {
     float: left;
-    width: 225px;
-    height: 200px;
+    width: 180px;
+    height: 190px;
+    margin-right: 5px;
 }
-.calendar .month-view .fc-toolbar{
+.calendar .month-view .fc-toolbar {
     margin-bottom: 5px;
 }
-.calendar .month-view .fc-toolbar h2{
+.calendar .month-view .fc-toolbar h2 {
     font-size: 14px;
 }
 .calendar .month-view .fc-body .fc-row {
     min-height: 20px;
 }
-.heat-indicator{
-    background: #0000ff; /* Old browsers */
-    background: -moz-linear-gradient(top,  #0000ff 0%, #00ffff 25%, #00ff00 50%, #ffff00 75%, #ff0000 100%); /* FF3.6-15 */
-    background: -webkit-linear-gradient(top,  #0000ff 0%,#00ffff 25%,#00ff00 50%,#ffff00 75%,#ff0000 100%); /* Chrome10-25,Safari5.1-6 */
-    background: linear-gradient(to bottom,  #0000ff 0%,#00ffff 25%,#00ff00 50%,#ffff00 75%,#ff0000 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
-    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#0000ff', endColorstr='#ff0000',GradientType=0 ); /* IE6-9 */
+.calendar .month-view .fc-day {
+    -webkit-transition: background 500ms;
+    -moz-transition: background 500ms;
+    -o-transition: background 500ms;
+    transition: background 500ms
+}
+.calendar .month-view .fc-day-number {
+    -webkit-transition: color 200ms;
+    -moz-transition: color 200ms;
+    -o-transition: color 200ms;
+    transition: color 200ms
+}
+.summary-container {
+    float: left;
+    width: calc(100% - 800px)
 
+}
+.summary-container .summary-content{
+    margin-left: 20px;
+}
+.summary-container .chart{
+    width: 400px;
+    height: 300px;
+    margin-left: 10px
+}
+.heat-indicator {
+    background: #0000ff;
+    /* Old browsers */
+    background: -moz-linear-gradient(top, #0000ff 0%, #00ffff 25%, #00ff00 50%, #ffff00 75%, #ff0000 100%);
+    /* FF3.6-15 */
+    background: -webkit-linear-gradient(top, #0000ff 0%, #00ffff 25%, #00ff00 50%, #ffff00 75%, #ff0000 100%);
+    /* Chrome10-25,Safari5.1-6 */
+    background: linear-gradient(to bottom, #0000ff 0%, #00ffff 25%, #00ff00 50%, #ffff00 75%, #ff0000 100%);
+    /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    filter: progid: DXImageTransform.Microsoft.gradient( startColorstr='#0000ff', endColorstr='#ff0000', GradientType=0);
+    /* IE6-9 */
     width: 30px;
     height: 180px;
     float: left;
-    margin-left: 20px;
+    margin-left: 10px;
     margin-top: 50px;
-    position:relative;
+    position: relative;
 }
-.heat-indicator::before{
-    position:absolute;
+.heat-indicator::before {
+    position: absolute;
     content: "Free";
     top: -20px;
-    font-family: "Roboto","Droid","Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-family: "Roboto", "Droid", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
-.heat-indicator::after{
-    position:absolute;
+.heat-indicator::after {
+    position: absolute;
     content: "Busy";
     bottom: -20px;
-    font-family: "Roboto","Droid","Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-family: "Roboto", "Droid", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }

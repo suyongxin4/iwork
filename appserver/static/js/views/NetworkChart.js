@@ -15,7 +15,23 @@ define([
 ) {
     var DURATION = 500;
     var PADDING = 30;
-    var HALF_PADDING = PADDING / 2;
+
+    function getFirstName(d){
+        var str, splitter;
+        if (d.context.name){
+            str = d.context.name;
+            splitter = " ";
+        } else {
+            str = d.key;
+            splitter = "@";
+        }
+        var index = str.lastIndexOf(splitter);
+        if (index < 0){
+            index = str.length;
+        }
+        index = Math.min(index, 11);
+        return str.substring(0, index);
+    }
 
     function collide(node, r) {
         var nx1 = node.x - r,
@@ -65,6 +81,12 @@ define([
     function onNodeHover(el, data){
         d3.event.preventDefault();
         d3.event.stopPropagation();
+        d3.select(el).select("text.data-label")
+            .transition().duration(DURATION / 2).attr("opacity", 0)
+            .each("end", function(d){
+                var selection = d3.select(this);
+                selection.text(d.total);
+            }).transition().duration(DURATION / 2).attr("opacity", 1);
         data.pie = new PieChart({
             el: $(el),
             data: getPieChartData(data),
@@ -78,6 +100,12 @@ define([
     function onNodeUnhover(el, data){
         d3.event.preventDefault();
         d3.event.stopPropagation();
+        d3.select(el).select("text.data-label")
+            .transition().duration(DURATION / 2).attr("opacity", 0)
+            .each("end", function(){
+                var selection = d3.select(this);
+                selection.text(getFirstName);
+            }).transition().duration(DURATION / 2).attr("opacity", 1);
         if (data.pie){
             data.pie.destroy();
             delete data.pie;
@@ -112,6 +140,7 @@ define([
             sizeScale.range([Math.max(size / 32, 10), size / 8]);
             var sent = this._data.sent;
             var received = this._data.received;
+            var orgMap = this._data.orgMap;
             var key, value, node, total;
             var totalSent = 0,
                 totalReceived = 0,
@@ -123,7 +152,8 @@ define([
                 total = value = sent[key];
                 totalSent += value;
                 node = {
-                    name: key,
+                    key: key,
+                    context: orgMap[key] || {},
                     sentTo: value,
                     receivedFrom: 0
                 };
@@ -149,7 +179,8 @@ define([
                 total = value = received[key];
                 totalReceived += value;
                 node = {
-                    name: key,
+                    key: key,
+                    context: orgMap[key] || {},
                     sentTo: 0,
                     receivedFrom: value
                 };
@@ -163,7 +194,10 @@ define([
 
             this._maxRadius = size / 6;
             this._rootNode = {
-                name: "You",
+                key: this._data.me,
+                context: {
+                    name: "You"
+                },
                 radius: this._maxRadius,
                 sent: totalSent,
                 received: totalReceived,
@@ -258,25 +292,10 @@ define([
                 title = circle.append("title");
             }
             title.text(function(d) {
-                return d.name;
+                return d.key;
             });
 
-            var text = node.select("text.text-label");
-            if (!text.node()){
-                if (this._showTextLabel){
-                    text = node.append("text").classed("text-label", true);
-                }
-            } else if (!this._showTextLabel){
-                text.remove();
-            }
-            if (this._showTextLabel){
-                text.text(function(d){
-                    return d.name;
-                }).transition().duration(DURATION / 2).attr("opacity", 0)
-                .transition().duration(DURATION / 2).attr("opacity", 1);
-            }
-
-            text = node.select("text.data-label");
+            var text = node.select("text.data-label");
             if (!text.node()){
                 if (this._showDataLabel){
                     text = node.append("text").classed("data-label", true);
@@ -285,9 +304,7 @@ define([
                 text.remove();
             }
             if (this._showDataLabel){
-                text.text(function(d){
-                    return d.total;
-                }).attr("opacity", 0).transition().duration(DURATION).attr("opacity", 1);
+                text.text(getFirstName).attr("opacity", 0).transition().duration(DURATION).attr("opacity", 1);
             }
             var force = d3.layout.force()
                 .nodes(nodes)

@@ -9,6 +9,7 @@ define([
     'ResizeSensor',
     "splunkjs/mvc/searchmanager",
     'contrib/text!app/templates/EmailView.html',
+    'app/utils/TimeUtil',
     'app/utils/DataParser',
     'app/utils/RequestUtil',
     'app/views/TimeAxis',
@@ -24,27 +25,29 @@ define([
     ResizeSensor,
     SearchManager,
     Template,
+    TimeUtil,
     DataParser,
     RequestUtil,
     TimeAxis,
     NetworkChart
 ) {
-    function getTimeLabels(){
-        var current = moment();
-        current.startOf("month");
-        var lastMonth = current.clone().subtract(1, "month");
-        var lastYear = current.clone().subtract(1, "year");
-        var ret = [];
-        while (lastYear.isSameOrBefore(lastMonth)){
-            ret.push(lastYear.format("YYYY-MM"));
-            lastYear.add(1, "month");
+    function transform(origin){
+        var ret = {};
+        for (var key in origin){
+            if (origin.hasOwnProperty(key) && origin[key].email){
+                ret[origin[key].email] = origin[key];
+            }
         }
         return ret;
     }
 
     var fromBlackList = [
         "jira-comments@splunk.com",
-        "confluence@splunk.com"
+        "confluence@splunk.com",
+        "app-builder@splunk.com",
+        "splunk@service-now.com",
+        "hipchat@splunk.com",
+        "voicemail@splunk.com"
     ];
 
     return Backbone.View.extend({
@@ -63,6 +66,11 @@ define([
                     .done(function(response){
                         var settings = JSON.parse(response.entry[0].content.iwork_settings);
                         that._me = settings.username;
+                        RequestUtil.sendRequest("get_iwork_orgchart")
+                            .done(function(response){
+                                var orgMap = JSON.parse(response.entry[0].content.iwork_orgchart);
+                                that._orgMap = transform(orgMap);
+                            });
                         render();
                     });
             } else {
@@ -72,7 +80,7 @@ define([
         _render: function(){
             var that = this;
             this.$el.html(this._compiledTemplate({}));
-            var labels = getTimeLabels();
+            var labels = TimeUtil.getTimeLabels();
             this._timeAxis = new TimeAxis({
                 el: this.$(".time-axis"),
                 labels: labels
@@ -146,7 +154,9 @@ define([
                 }
                 that._networkChart.data({
                     sent: dataSent,
-                    received: dataReceived
+                    received: dataReceived,
+                    orgMap: that._orgMap,
+                    me: me
                 });
             });
         }
