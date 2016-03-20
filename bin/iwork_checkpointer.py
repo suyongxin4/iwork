@@ -52,6 +52,9 @@ class EmployeeDetailLookup(object):
             self._cached = {}
 
     def update(self, name, email):
+        if name and "@" in name and name.endswith("splunk.com"):
+            return
+
         with self._lock:
             if name not in self._cached:
                 state = {
