@@ -64,17 +64,6 @@ define([
                     path = slice.append("path");
                     path.style("fill", that._palette[i]);
                 }
-                // path.each(function(d){
-                //     this._current = d;
-                // }).transition().duration(300).attr("d", arc).attrTween("d",
-                //     function(d) {
-                //         var interpolate = d3.interpolate(this._current,
-                //             d);
-                //         this._current = interpolate(0);
-                //         return function(t) {
-                //             return arc(interpolate(t));
-                //         };
-                //     });
                 path.attr("d", arc);
                 var text = slice.select("text");
                 if (!text.node()) {
@@ -84,7 +73,6 @@ define([
                     return "translate(" + arcText.centroid(d) +
                         ")";
                 });
-                // .attr("dy", ".35em")
                 var ratio = Math.round(that._parts[i] * 100);
                 if (ratio && r >= 28) {
                     text.text(ratio + "%");
@@ -99,8 +87,6 @@ define([
                 pieContainer.transition().duration(300).attr("opacity", 0).each("end", function(){
                     d3.select(this).remove();
                 });
-                // pieContainer.attr("transform", "translate(" + (-r) + ", " + (-r) +
-                //     ")");
             }
             return this;
         }

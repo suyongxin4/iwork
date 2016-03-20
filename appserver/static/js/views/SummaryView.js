@@ -81,7 +81,8 @@ define([
                     name: "Number of Meetings",
                     data: this._collector.getCollection().map(function(row){
                         return row.length;
-                    })
+                    }),
+                    color: "#41b6c4"
                 }]
             });
             this.$(".chart svg text[zIndex=8]").remove();

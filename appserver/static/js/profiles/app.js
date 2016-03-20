@@ -19,6 +19,9 @@ var config = {
         },
         "highcharts": {
             deps: ["highcharts.core"]
+        },
+        "select2": {
+            deps: ["jquery"]
         }
     },
     paths: {
@@ -33,6 +36,7 @@ var config = {
         'ResizeSensor': '../app/Splunk_TA_iwork/lib/CSS-Element-Queries/ResizeSensor',
         'highcharts.core': '../app/Splunk_TA_iwork/lib/highcharts/highcharts',
         'highcharts': '../app/Splunk_TA_iwork/lib/highcharts/modules/exporting',
+        'select2': '../app/Splunk_TA_iwork/lib/select2/js/select2.min',
     },
     enforceDefine: false
 };
