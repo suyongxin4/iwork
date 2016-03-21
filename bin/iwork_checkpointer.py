@@ -60,9 +60,9 @@ class EmployeeDetailLookup(object):
                 state = {
                     "name": name.encode("ascii", "ignore"),
                     "email": email,
-                    "department": "Unkown",
-                    "location": "Unkown",
-                    "manager": "Unkown"
+                    "department": "Unknown",
+                    "location": "Unknown",
+                    "manager": "Unknown"
                 }
                 self._ckpt.update_state(name, state)
                 self._cached[name] = state
