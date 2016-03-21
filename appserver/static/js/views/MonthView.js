@@ -7,7 +7,6 @@ define([
     'moment',
     'fullcalendar',
     "splunkjs/mvc/searchmanager",
-    'contrib/text!app/templates/HomeView.html',
     'app/utils/DataParser'
 ], function(
     $,
@@ -18,7 +17,6 @@ define([
     moment,
     Fullcalendar,
     SearchManager,
-    Template,
     DataParser
 ) {
     function generateBuckets(start, end){
@@ -36,13 +34,12 @@ define([
     }
 
     return Backbone.View.extend({
-        template: Template,
         initialize: function(options) {
             Backbone.View.prototype.initialize.apply(this, arguments);
-            this._compiledTemplate = _.template(this.template);
             this._options = options;
             this._date = options.date;
             this._calendarData = null;
+            this._collector = options.collector;
         },
         render: function() {
             this.$el.fullCalendar({
@@ -50,8 +47,10 @@ define([
                 header: {
                     right: ""
                 },
-                defaultDate: this._date
+                defaultDate: this._date,
+                weekends: false
             });
+            this.$(".fc-scroller").removeAttr("style");
             return this;
         },
         onViewRender: function(view) {
@@ -77,6 +76,7 @@ define([
                 for (var i = 0; i < dp.length; ++i){
                     var s = moment(dp.getRowField(i, "start"));
                     var d = -s.diff(dp.getRowField(i, "stop"), "minutes");
+                    that._collector.addData(d);
                     buckets[s.format("YYYY-MM-DD")] += d;
                 }
                 that.$(".fc-day").css("background", "none");

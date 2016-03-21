@@ -3,19 +3,13 @@ define([
     'underscore',
     'backbone',
     'bootstrap',
-    'd3',
-    'moment',
-    'app/views/TimeAxis'
+    'd3'
 ], function(
     $,
     _,
     Backbone,
     Bootstrap,
-    d3,
-    moment,
-    SearchManager,
-    Template,
-    TimeAxis
+    d3
 ) {
     var DURATION = 500;
     var PADDING = 30;
@@ -33,7 +27,6 @@ define([
     }
 
     return Backbone.View.extend({
-        template: Template,
         initialize: function(options) {
             Backbone.View.prototype.initialize.apply(this, arguments);
             this._container = d3.select(this.el);
@@ -215,7 +208,7 @@ define([
                 indicatorRect = group.append("rect").classed("indicator", true);
                 var rectDrag = d3.behavior.drag();
                 indicatorRect.call(rectDrag);
-                rectDrag.on("dragstart", function(e) {
+                rectDrag.on("dragstart", function() {
                     var pos = that._dragStartPos = getEventPos(
                         groupNode);
                     var box = indicatorRect.node().getBBox();
@@ -224,7 +217,7 @@ define([
                         x: pos.x - box.x,
                         y: pos.y - box.y
                     };
-                }).on("drag", function(e) {
+                }).on("drag", function() {
                     var pos = getEventPos(groupNode);
                     var x = pos.x;
                     var dx = that._dragStartPosAgainstRect.x;
@@ -238,7 +231,7 @@ define([
                     indicatorStartCircle.attr("cx", x - dx);
                     indicatorEndCircle.attr("cx", x + dxr);
                     indicatorRect.attr("x", x - dx);
-                }).on("dragend", function(e) {
+                }).on("dragend", function() {
                     var pos = getEventPos(groupNode);
                     var sx = that._calcIndicatorStart(pos.x - that._dragStartPosAgainstRect
                         .x);
@@ -266,9 +259,9 @@ define([
                     true);
                 var startDrag = d3.behavior.drag();
                 indicatorStartCircle.call(startDrag);
-                startDrag.on("dragstart", function(e) {
+                startDrag.on("dragstart", function() {
                     that._dragStartPos = getEventPos(groupNode);
-                }).on("drag", function(e) {
+                }).on("drag", function() {
                     var pos = getEventPos(groupNode);
                     var x = pos.x;
                     var end = that._getIndicatorEndPos();
@@ -280,7 +273,7 @@ define([
                     }
                     indicatorStartCircle.attr("cx", x);
                     indicatorRect.attr("x", x).attr("width", end - x);
-                }).on("dragend", function(e) {
+                }).on("dragend", function() {
                     var pos = getEventPos(groupNode);
                     var x = that._calcIndicatorStart(pos.x);
                     indicatorStartCircle.transition().duration(DURATION)
@@ -301,9 +294,9 @@ define([
                 indicatorEndCircle = group.append("circle").classed("end", true);
                 var endDrag = d3.behavior.drag();
                 indicatorEndCircle.call(endDrag);
-                endDrag.on("dragstart", function(e) {
+                endDrag.on("dragstart", function() {
                     that._dragStartPos = getEventPos(groupNode);
-                }).on("drag", function(e) {
+                }).on("drag", function() {
                     var pos = getEventPos(groupNode);
                     var x = pos.x;
                     var start = that._getIndicatorStartPos();
@@ -315,7 +308,7 @@ define([
                     }
                     indicatorEndCircle.attr("cx", x);
                     indicatorRect.attr("width", x - start);
-                }).on("dragend", function(e) {
+                }).on("dragend", function() {
                     var pos = getEventPos(groupNode);
                     var x = that._calcIndicatorEnd(pos.x);
                     indicatorEndCircle.transition().duration(DURATION)

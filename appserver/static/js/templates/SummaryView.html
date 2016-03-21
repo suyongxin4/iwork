@@ -1,0 +1,11 @@
+<div class="summary-content">
+    <h3>Total Meetings</h3>
+    <p><%- totalNumber %></p>
+    <h3>Average Meetings per Week</h3>
+    <p><%- (totalNumber / weeks).toFixed(2) %></p>
+    <h3>Total Meeting Hours</h3>
+    <p><%- Math.round(totalTime / 60) %> hours</p>
+    <h3>Average Meeting Hours per Week</h3>
+    <p><%- (totalTime / 60 / weeks).toFixed(2) %> hours</p>
+</div>
+<div class="chart"></div>
