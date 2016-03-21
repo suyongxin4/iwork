@@ -269,11 +269,14 @@ define([
                         getKeys(fieldTo));
                 } else {
                     // Sent by me.
+                    var keys = getKeys(fieldTo);
                     fieldTo.forEach(function(r) {
                         entry = getEntry(r);
-                        entry.sentTo++;
                         entry.sentToConnection = _.union(entry.sentToConnection,
-                            getKeys(fieldTo));
+                            keys);
+                    });
+                    keys.forEach(function(key){
+                        networkData[key].sentTo++;
                     });
                 }
             }
