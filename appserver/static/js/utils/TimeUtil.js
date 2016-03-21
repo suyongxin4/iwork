@@ -26,5 +26,12 @@ define([
         return lastMonth.diff(lastYear, "weeks");
     };
 
+        util.getHours = function(){
+            var current = moment();
+            current.startOf("month");
+            var lastMonth = current.clone().subtract(1, "month").endOf("month");
+            var lastYear = current.clone().subtract(1, "year");
+            return lastMonth.diff(lastYear, "hours");
+        };
     return util;
 });

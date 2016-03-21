@@ -1,6 +1,6 @@
 <nav search_view="search" color="#65A637">
 
-<view name="Meeting" default="false" label="Meeting" />
+<view name="Calendar" default="false" label="Calendar" />
 <view name="Email" default="true" label="Email" />
 <view name="search" default="false" label="Search" />
 <view name="Configuration" default="false" label="Configuration" />
