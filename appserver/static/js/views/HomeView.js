@@ -31,22 +31,25 @@ define([
             this._collector = new MeetingDataCollector();
         },
         render: function() {
+            var labels = TimeUtil.getTimeLabels();
             this.$el.html(this._compiledTemplate({
-                monthLabels: TimeUtil.getTimeLabels()
+                monthLabels: labels
             }));
             var collector = this._collector;
-            this.$(".month-view").each(function(){
+            this.$(".month-view").each(function(i){
                 var el = $(this);
                 var monthView = new MonthView({
                     el: el,
                     date: el.attr("name"),
+                    index: i,
                     collector: collector
                 });
                 monthView.render();
             });
             new SummaryView({
                 el: this.$(".summary-container"),
-                collector: collector
+                collector: collector,
+                labels: labels
             });
             return this;
         }

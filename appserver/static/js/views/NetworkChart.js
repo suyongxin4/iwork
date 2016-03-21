@@ -83,7 +83,7 @@ define([
 
         var x2 = target.x;
         var y2 = target.y;
-        var r2 = target.radius - 10;
+        var r2 = target.radius - 14;
 
         var dx = x1 - x2;
         var dy = y1 - y2;

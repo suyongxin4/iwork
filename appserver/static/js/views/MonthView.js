@@ -38,6 +38,7 @@ define([
             Backbone.View.prototype.initialize.apply(this, arguments);
             this._options = options;
             this._date = options.date;
+            this._index = options.index;
             this._calendarData = null;
             this._collector = options.collector;
         },
@@ -70,6 +71,7 @@ define([
                 offset: 0
             });
             var buckets = generateBuckets(start, end);
+            var index = this._index;
             var that = this;
             results.on("data", function(model, data) {
                 var rawIdx = data.fields.indexOf("_raw");
@@ -92,7 +94,7 @@ define([
                 for (var i = 0; i < dp.length; ++i){
                     var s = moment(dp.getRowField(i, "start"));
                     var d = -s.diff(dp.getRowField(i, "stop"), "minutes");
-                    that._collector.addData(d);
+                    that._collector.addData(d, index);
                     buckets[s.format("YYYY-MM-DD")] += d;
                 }
                 that.$(".fc-day").css("background", "none");
