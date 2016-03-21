@@ -61,7 +61,7 @@ define([
         decorateCalendar: function(start, end) {
             var sm = new SearchManager({
                 id: _.uniqueId("calendar"),
-                search: "* sourcetype=iwork:calendar | fields start, stop, subject, attendees",
+                search: "* sourcetype=iwork:calendar subject!=*BLACKOUT* | fields start, stop, subject, attendees",
                 earliest_time: start.toISOString(),
                 latest_time: end.toISOString(),
             });
@@ -72,7 +72,23 @@ define([
             var buckets = generateBuckets(start, end);
             var that = this;
             results.on("data", function(model, data) {
-                var dp = new DataParser(data);
+                var rawIdx = data.fields.indexOf("_raw");
+                var dp = new DataParser(data, {
+                    dedup: function(rows){
+                        var ret = [];
+                        var map = {};
+                        rows.forEach(function(row){
+                            var obj = JSON.parse(row[rawIdx]);
+                            var key = [obj.start, obj.stop, obj.subject, obj.attendees?obj.attendees.join():obj.attendees].join();
+                            if (map[key]){
+                                return;
+                            }
+                            map[key] = true;
+                            ret.push(row);
+                        });
+                        return ret;
+                    }
+                });
                 for (var i = 0; i < dp.length; ++i){
                     var s = moment(dp.getRowField(i, "start"));
                     var d = -s.diff(dp.getRowField(i, "stop"), "minutes");
