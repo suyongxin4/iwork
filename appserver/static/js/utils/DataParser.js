@@ -1,10 +1,17 @@
-define(function() {
+define(["underscore"],function(_) {
     var RAW_KEY = "_raw";
 
-    function DataParser(data) {
+    function DataParser(data, options) {
+        options = options || {};
         this._data = data;
         this._fields = data.fields;
-        this._rows = data.rows;
+        this._dedupFn = options.dedup;
+        if (!_.isFunction(this._dedupFn)){
+            this._dedupFn = function(a){
+                return a;
+            };
+        }
+        this._rows = this._dedupFn(data.rows);
         this.length = this._rows.length;
         this._rowObjects = [];
         this._rowObjects.length = this.length;

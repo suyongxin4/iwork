@@ -142,7 +142,23 @@ define([
                 offset: 0
             });
             results.on("data", function(model, data) {
-                that._result = new DataParser(data);
+                var rawIdx = data.fields.indexOf("_raw");
+                that._result = new DataParser(data, {
+                    dedup: function(rows){
+                        var ret = [];
+                        var map = {};
+                        rows.forEach(function(row){
+                            var obj = JSON.parse(row[rawIdx]);
+                            var key = [obj.date, obj.from, obj.subject, obj.thread, obj.to?obj.to.join():obj.to].join();
+                            if (map[key]){
+                                return;
+                            }
+                            map[key] = true;
+                            ret.push(row);
+                        });
+                        return ret;
+                    }
+                });
                 that._networkChart.data(that.generateNetworkData());
             });
         },
