@@ -12,6 +12,7 @@
         "require": false,
         "window": true,
         "document": true,
-        "FileReader": false
+        "FileReader": false,
+        "Highcharts": false
     }
 }

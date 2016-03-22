@@ -8,7 +8,8 @@ define([
     'app/utils/MeetingDataCollector',
     'contrib/text!app/templates/HomeView.html',
     'app/views/MonthView',
-    'app/views/SummaryView'
+    'app/views/SummaryView',
+    'app/views/AnalysisView'
 ], function(
     $,
     _,
@@ -19,7 +20,8 @@ define([
     MeetingDataCollector,
     Template,
     MonthView,
-    SummaryView
+    SummaryView,
+    AnalysisView
 ) {
 
     return Backbone.View.extend({
@@ -48,6 +50,11 @@ define([
             });
             new SummaryView({
                 el: this.$(".summary-container"),
+                collector: collector,
+                labels: labels
+            });
+            new AnalysisView({
+                el: this.$(".analysis-container"),
                 collector: collector,
                 labels: labels
             });

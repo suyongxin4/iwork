@@ -7,18 +7,71 @@ body {
     height: 100%;
 }
 div.root-view {
-    width: calc(100% - 40px);
-    height: calc(100% - 105px);
-    padding: 20px;
+    width: 800px;
+    padding-left: 20px;
+    padding-right: 20px;
+    left:0;
+    right:0;
+    margin-left:auto;
+    margin-right:auto;
+    height: calc(100% - 65px);
+    overflow: auto;
+}
+.summary-container {
+    float: left;
+    height: 100px;
+    width: 100%;
+}
+.summary-container .summary-content{
+    border-bottom: 1px solid #999;
+    height: 100%;
+}
+.summary-container .summary-content .block{
+    float: left;
+    width: 180px;
+    height: 80px;
+    padding: 10px;
+    position: relative;
+}
+.summary-container .summary-content .block:after{
+    content: "";
+    border-right: 1px solid #999;
+    height: 100px;
+    position: absolute;
+    top: 0;
+    right:0;
+}
+.summary-container .summary-content .block:first-child:before{
+    content: "";
+    border-left: 1px solid #999;
+    height: 100px;
+    position: absolute;
+    top: 0;
+    left:0;
+}
+
+.summary-container .summary-content .block h3{
+    height: 40px;
+    font-weight: bold;
+    text-align: center;
+}
+.summary-container .summary-content .block p{
+    text-align: center;
+    font-size: 14px;
+}
+.calendar-container{
+    float: left;
+    padding-left: 5px;
+    padding-top:10px;
 }
 .calendar {
-    width: 740px;
+    width: 750px;
     float: left;
 }
 .calendar .month-view {
     float: left;
     width: 180px;
-    height: 190px;
+    height: 165px;
     margin-right: 5px;
 }
 .calendar .month-view .fc-toolbar {
@@ -42,34 +95,24 @@ div.root-view {
     -o-transition: color 200ms;
     transition: color 200ms
 }
-.summary-container {
+.analysis-container{
     float: left;
-    width: calc(100% - 800px)
-
-}
-.summary-container .summary-content{
-    margin-left: 20px;
-    height: 270px;
-}
-.summary-container .chart{
-    width: 390px;
-    height: 300px;
 }
 .analysis-container .chart{
-    width: 390px;
+    width: 400px;
     height: 300px;
     float: left;
 }
 .heat-indicator {
     background: #0000ff;
     /* Old browsers */
-    background: -moz-linear-gradient(top, #0000ff 0%, #00ffff 25%, #00ff00 50%, #ffff00 75%, #ff0000 100%);
+    background: -moz-linear-gradient(top, #00ff00 0%, #ffff00 50%, #ff0000 100%);
     /* FF3.6-15 */
-    background: -webkit-linear-gradient(top, #0000ff 0%, #00ffff 25%, #00ff00 50%, #ffff00 75%, #ff0000 100%);
+    background: -webkit-linear-gradient(top, #00ff00 0%, #ffff00 50%, #ff0000 100%);
     /* Chrome10-25,Safari5.1-6 */
-    background: linear-gradient(to bottom, #0000ff 0%, #00ffff 25%, #00ff00 50%, #ffff00 75%, #ff0000 100%);
+    background: linear-gradient(to bottom, #00ff00 0%, #ffff00 50%, #ff0000 100%);
     /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
-    filter: progid: DXImageTransform.Microsoft.gradient( startColorstr='#0000ff', endColorstr='#ff0000', GradientType=0);
+    filter: progid: DXImageTransform.Microsoft.gradient( startColorstr='#00ff00', endColorstr='#ff0000', GradientType=0);
     /* IE6-9 */
     width: 30px;
     height: 180px;
