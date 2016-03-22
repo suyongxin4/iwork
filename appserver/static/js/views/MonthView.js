@@ -29,7 +29,7 @@ define([
     }
 
     function heatMapColorforValue(value){
-      var h = (1.0 - value) * 240;
+      var h = (1.0 - value) * 120;
       return "hsl(" + h + ", 100%, 50%)";
     }
 
@@ -55,6 +55,7 @@ define([
             return this;
         },
         onViewRender: function(view) {
+            this.$(".fc-body .fc-row:last-child").remove();
             var viewMoment = view.calendar.getDate().utcOffset(moment().utcOffset());
             this.decorateCalendar(viewMoment.clone().startOf("month"),
                 viewMoment.clone().endOf("month"));
@@ -106,7 +107,7 @@ define([
                             ratio = 1;
                         }
                         day.css("background", heatMapColorforValue(ratio));
-                        if (ratio < 0.1 || ratio > 0.9){
+                        if (ratio > 0.9){
                             that.$(".fc-day-number[data-date='"+key+"']")
                                 .css("color", "#fff");
                         }
