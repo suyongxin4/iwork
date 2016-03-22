@@ -1,10 +1,12 @@
-<div class="summary-container"></div>
-<div class="calendar-container">
-    <div class="calendar">
-        <% monthLabels.forEach(function(label){ %>
-            <div class="month-view" name="<%- label %>"></div>
-        <% }); %>
+<div class="center">
+    <div class="summary-container"></div>
+    <div class="calendar-container">
+        <div class="calendar">
+            <% monthLabels.forEach(function(label){ %>
+                <div class="month-view" name="<%- label %>"></div>
+            <% }); %>
+        </div>
+        <div class="heat-indicator"></div>
     </div>
-    <div class="heat-indicator"></div>
+    <div class="analysis-container"></div>
 </div>
-<div class="analysis-container"></div>

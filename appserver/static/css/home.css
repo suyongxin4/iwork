@@ -7,6 +7,11 @@ body {
     height: 100%;
 }
 div.root-view {
+    width:100%;
+    height: calc(100% - 65px);
+    overflow: auto;
+}
+.center{
     width: 800px;
     padding-left: 20px;
     padding-right: 20px;
@@ -14,8 +19,6 @@ div.root-view {
     right:0;
     margin-left:auto;
     margin-right:auto;
-    height: calc(100% - 65px);
-    overflow: auto;
 }
 .summary-container {
     float: left;
