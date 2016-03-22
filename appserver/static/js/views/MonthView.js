@@ -63,7 +63,7 @@ define([
         decorateCalendar: function(start, end) {
             var sm = new SearchManager({
                 id: _.uniqueId("calendar"),
-                search: "* sourcetype=iwork:calendar subject!=*BLACKOUT* | fields start, stop, subject, attendees",
+                search: "sourcetype=iwork:calendar subject!=*BLACKOUT* | fields start, stop, subject, attendees",
                 earliest_time: start.toISOString(),
                 latest_time: end.toISOString(),
             });
@@ -74,15 +74,15 @@ define([
             var buckets = generateBuckets(start, end);
             var index = this._index;
             var that = this;
+            var map = {};
             results.on("data", function(model, data) {
                 var rawIdx = data.fields.indexOf("_raw");
                 var dp = new DataParser(data, {
                     dedup: function(rows){
                         var ret = [];
-                        var map = {};
                         rows.forEach(function(row){
                             var obj = JSON.parse(row[rawIdx]);
-                            var key = [obj.start, obj.stop, obj.subject, obj.attendees?obj.attendees.join():obj.attendees].join();
+                            var key = [obj.start, obj.stop, obj.subject].join();
                             if (map[key]){
                                 return;
                             }
