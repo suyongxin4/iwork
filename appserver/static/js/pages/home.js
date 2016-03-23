@@ -4,14 +4,14 @@ require([
     'backbone',
     'bootstrap',
     'splunkjs/mvc/headerview',
-    'app/views/HomeView'
+    'app/views/CalendarView'
 ], function(
     $,
     _,
     Backbone,
     Bootstrap,
     HeaderView,
-    HomeView
+    CalendarView
 ) {
     var headerView = new HeaderView({
         id: 'header',
@@ -21,7 +21,7 @@ require([
     });
     headerView.render();
 
-    var homeView = new HomeView({
+    var homeView = new CalendarView({
         el: $('.root-view')
     });
     homeView.render();

@@ -5,7 +5,7 @@ define([
     'bootstrap',
     'moment',
     'app/utils/TimeUtil',
-    'contrib/text!app/templates/AnalysisView.html',
+    'contrib/text!app/templates/CalendarAnalysisView.html',
     'highcharts'
 ], function(
     $,
@@ -44,7 +44,7 @@ define([
                     backgroundColor: "#eee"
                 },
                 title:{
-                    text: "Number of Meetings categorized by Duration"
+                    text: "Number of Meetings by Duration"
                 },
                 xAxis: {
                     categories:[
@@ -75,10 +75,10 @@ define([
                     data: this._collector.getCollection().map(function(row){
                         return row.length;
                     }),
-                    color: "#41b6c4"
+                    color: "#2b8cbe"
                 }]
             });
-            Highcharts.getOptions().plotOptions.pie.colors = ["#41b6c4", "#78c679"];
+            Highcharts.getOptions().plotOptions.pie.colors = ["#2b8cbe", "#78c679"];
             this.$(".pie-chart").highcharts({
                 navigation: {
                     buttonOptions:{
@@ -93,7 +93,7 @@ define([
                     text: "Busy vs. Free"
                 },
                 tooltip: {
-                    pointFormat: '{series.name}: <b>{point.y:.1f} hours</b>'
+                    pointFormat: '{point.name}: <b>{point.y:.1f} hours</b>'
                 },
                 plotOptions:{
                     pie:{
@@ -107,7 +107,7 @@ define([
                     enabled: false
                 },
                 series:[{
-                    name: "Number of Meetings",
+                    name: "Meeting Hours",
                     data: [{
                         name: "Meeting Hours",
                         y: this._collector.getTotalTime() / 60
@@ -154,7 +154,7 @@ define([
                     data: this._collector.getSubCollection().map(function(collection){
                         return collection.totalNumber;
                     }),
-                    color: "#41b6c4"
+                    color: "#2b8cbe"
                 }]
             });
             this.$(".line-chart-time").highcharts({
@@ -194,7 +194,7 @@ define([
                     data: this._collector.getSubCollection().map(function(collection){
                         return +(collection.totalTime / 60).toFixed(2);
                     }),
-                    color: "#41b6c4"
+                    color: "#2b8cbe"
                 }]
             });
 

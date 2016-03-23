@@ -1,0 +1,18 @@
+<table>
+    <tbody>
+        <% _(data).each(function(d){ %>
+            <tr>
+                <td><b><%- d.key %></b></td>
+                <td><%- d.value %></td>
+            </tr>
+        <% }); %>
+        <tr class="sent-to">
+            <td><b>Sent To</b></td>
+            <td><%- sentTo %></td>
+        </tr>
+        <tr class="recv-fr">
+            <td><b>Received From</b></td>
+            <td><%- recvFr %></td>
+        </tr>
+    </tbody>
+</table>

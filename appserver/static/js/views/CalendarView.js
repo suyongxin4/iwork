@@ -6,10 +6,10 @@ define([
     'moment',
     'app/utils/TimeUtil',
     'app/utils/MeetingDataCollector',
-    'contrib/text!app/templates/HomeView.html',
+    'contrib/text!app/templates/CalendarView.html',
     'app/views/MonthView',
     'app/views/SummaryView',
-    'app/views/AnalysisView'
+    'app/views/CalendarAnalysisView'
 ], function(
     $,
     _,
@@ -21,7 +21,7 @@ define([
     Template,
     MonthView,
     SummaryView,
-    AnalysisView
+    CalendarAnalysisView
 ) {
 
     return Backbone.View.extend({
@@ -48,12 +48,13 @@ define([
                 });
                 monthView.render();
             });
+            labels = TimeUtil.getTimeLabelsInChart();
             new SummaryView({
                 el: this.$(".summary-container"),
                 collector: collector,
                 labels: labels
             });
-            new AnalysisView({
+            new CalendarAnalysisView({
                 el: this.$(".analysis-container"),
                 collector: collector,
                 labels: labels

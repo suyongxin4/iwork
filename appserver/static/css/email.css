@@ -14,23 +14,38 @@ div.root-view {
 div.root-view .select-container {
     height: 30px;
     line-height: 30px;
-}
-div.root-view .select-container .number-selector-container{
     float: left;
 }
-div.root-view .select-container .group-selector-container{
+div.root-view .select-container .number-selector-container {
+    float: left;
+}
+div.root-view .select-container .group-selector-container {
     margin-left: 20px;
     float: left;
 }
-div.root-view .select-container .number-selector-container select{
+div.root-view .select-container .number-selector-container select {
     width: 60px;
 }
-div.root-view .select-container .group-selector-container select{
+div.root-view .select-container .group-selector-container select {
     width: 100px;
 }
+.analysis-container {
+    float: right;
+    width: 400px;
+    height: calc(100% - 90px);
+}
+.analysis-container .chart {
+    width: 400px;
+    height: 48%;
+    float: left;
+    clear: both;
+    margin-top: 2%;
+}
 div.root-view .connection-diagram-container {
-    width: 100%;
-    height: 100%;
+    width: calc(100% - 400px);
+    height: calc(100% - 30px);
+    float: left;
+    clear: both;
 }
 div.root-view .connection-diagram-container svg {
     width: 100%;
@@ -44,33 +59,31 @@ div.root-view .connection-diagram-container svg.network-chart {
     height: calc(100% - 90px);
     min-height: 480px;
 }
-div.root-view .connection-diagram-container svg.network-chart .link-group .link{
+div.root-view .connection-diagram-container svg.network-chart .link-group .link {
     stroke-width: 2;
     fill: none;
-    pointer-events:none;
+    pointer-events: none;
 }
-div.root-view .connection-diagram-container svg.network-chart .link-group .link.link-to{
+div.root-view .connection-diagram-container svg.network-chart .link-group .link.link-to {
     stroke: #238443;
-    marker-end:url(#end-arrow-green);
-
+    marker-end: url(#end-arrow-green);
 }
-div.root-view .connection-diagram-container svg.network-chart .link-group .link.link-from{
+div.root-view .connection-diagram-container svg.network-chart .link-group .link.link-from {
     stroke: #2b8cbe;
-    marker-end:url(#end-arrow-blue);
+    marker-end: url(#end-arrow-blue);
 }
-div.root-view .connection-diagram-container svg.network-chart g.node text{
+div.root-view .connection-diagram-container svg.network-chart g.node text {
     text-anchor: middle;
     dominant-baseline: central;
     pointer-events: none;
 }
-div.root-view .connection-diagram-container svg.network-chart g.node circle{
+div.root-view .connection-diagram-container svg.network-chart g.node circle {
     fill: #41b6c4;
-    stroke: #333;
 }
-div.root-view .connection-diagram-container svg.network-chart g.node.root-node circle{
+div.root-view .connection-diagram-container svg.network-chart g.node.root-node circle {
     fill: #78c679;
 }
-
+div.root-view .connection-diagram-container svg.network-chart g.node .pie-container path {}
 div.root-view .connection-diagram-container svg.time-axis {
     height: 60px;
 }
@@ -94,4 +107,52 @@ div.root-view .connection-diagram-container svg.time-axis .indicator rect.indica
 div.root-view .connection-diagram-container svg.time-axis .indicator circle {
     cursor: col-resize;
     fill: #41b6c4;
+}
+div.root-view .chart-tooltip {
+    position: fixed;
+    display: none;
+    background: #fff;
+    border: 1px solid #333;
+    border-radius: 5px;
+    padding: 20px;
+    width: 240px;
+    opacity: 0.8;
+}
+div.root-view .chart-tooltip table{
+    width: 100%;
+}
+div.root-view .chart-tooltip table tr td:nth-child(1){
+    text-align: right;
+    padding-right: 5px;
+}
+div.root-view .chart-tooltip table tr td:nth-child(2){
+    padding-left: 5px;
+    position:relative;
+}
+
+div.root-view .chart-tooltip table tr.recv-fr td:nth-child(2){
+    padding-left:25px;
+}
+div.root-view .chart-tooltip table tr.recv-fr td:nth-child(2):before{
+    content: "";
+    width: 15px;
+    height: 15px;
+    border-radius: 5px;
+    background: #2b8cbe;
+    position: absolute;
+    left: 5px;
+    top: 1px;
+}
+div.root-view .chart-tooltip table tr.sent-to td:nth-child(2){
+    padding-left:25px;
+}
+div.root-view .chart-tooltip table tr.sent-to td:nth-child(2):before{
+    content: "";
+    width: 15px;
+    height: 15px;
+    border-radius: 5px;
+    background: #78c679;
+    position: absolute;
+    left: 5px;
+    top: 1px;
 }
