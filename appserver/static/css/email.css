@@ -29,6 +29,18 @@ div.root-view .select-container .number-selector-container select{
 div.root-view .select-container .group-selector-container select{
     width: 100px;
 }
+.analysis-container{
+    float:right;
+    width: 400px;
+    height: calc(100% - 90px);
+}
+.analysis-container .chart{
+    width: 400px;
+    height: 48%;
+    float: left;
+    clear: both;
+    margin-top: 2%;
+}
 div.root-view .connection-diagram-container {
     width: calc(100% - 400px);
     height: calc(100% - 30px);

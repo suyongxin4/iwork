@@ -12,7 +12,9 @@ define([
     'contrib/text!app/templates/EmailView.html',
     'app/utils/TimeUtil',
     'app/utils/DataParser',
+    'app/utils/EmailDataCollector',
     'app/utils/RequestUtil',
+    'app/views/EmailAnalysisView',
     'app/views/TimeAxis',
     'app/views/NetworkChart'
 ], function(
@@ -29,7 +31,9 @@ define([
     Template,
     TimeUtil,
     DataParser,
+    EmailDataCollector,
     RequestUtil,
+    EmailAnalysisView,
     TimeAxis,
     NetworkChart
 ) {
@@ -59,6 +63,7 @@ define([
             this._compiledTemplate = _.template(this.template);
             this._options = options;
             this._me = null;
+            this._collector = new EmailDataCollector();
         },
         render: function() {
             var render = this._render.bind(this);
@@ -84,6 +89,10 @@ define([
         _render: function() {
             var that = this;
             this.$el.html(this._compiledTemplate({}));
+            new EmailAnalysisView({
+                el: this.$(".analysis-container"),
+                collector: this._collector
+            });
             this.$(".sel-number").select2({
                 minimumResultsForSearch: Infinity
             }).on("change", function() {
@@ -93,6 +102,7 @@ define([
             this.$(".sel-group").select2({
                 minimumResultsForSearch: Infinity
             }).on("change", function() {
+                that._networkChart.stopListening();
                 that._networkChart.data(that.generateNetworkData());
             });
             var labels = TimeUtil.getTimeLabels();
@@ -113,6 +123,7 @@ define([
                     return;
                 }
                 that._range = data;
+                that._collector.reset();
                 that.startSearch();
             });
             var $container = this.$(".connection-diagram-container");
@@ -141,7 +152,7 @@ define([
                 count: 0,
                 offset: 0
             });
-            that._networkChart.stopListening();
+            this._networkChart.stopListening();
             results.on("data", function(model, data) {
                 var rawIdx = data.fields.indexOf("_raw");
                 that._result = new DataParser(data, {
@@ -160,10 +171,10 @@ define([
                         return ret;
                     }
                 });
-                that._networkChart.data(that.generateNetworkData());
+                that._networkChart.data(that.generateNetworkData(true));
             });
         },
-        generateNetworkData: function() {
+        generateNetworkData: function(isCollecting) {
             var type = this.$(".sel-group").val();
             var dp = this._result;
             var me = this._me;
@@ -171,6 +182,7 @@ define([
             var networkData = {};
             var getEntry, getKeys, getText, getTitle;
             var entry, i, fieldFrom, fieldTo;
+            var collector = this._collector;
             if (type === "individual") {
                 getEntry = function(email) {
                     if (!networkData[email]) {
@@ -280,6 +292,9 @@ define([
                 }
                 if (fieldFrom.indexOf(me) < 0) {
                     // Sent to me.
+                    if (isCollecting){
+                        collector.addReceived(dp.getRowField(i, "date"));
+                    }
                     entry = getEntry(fieldFrom);
                     entry.recvFr++;
                     entry.recvFrConnection = _.union(entry.recvFrConnection,
@@ -288,6 +303,9 @@ define([
                     // Sent by me.
                     var keys = getKeys(fieldTo);
                     fieldTo.forEach(function(r) {
+                        if (isCollecting){
+                            collector.addSent(dp.getRowField(i, "date"));
+                        }
                         entry = getEntry(r);
                         entry.sentToConnection = _.union(entry.sentToConnection,
                             keys);

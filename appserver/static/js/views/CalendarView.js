@@ -48,6 +48,7 @@ define([
                 });
                 monthView.render();
             });
+            labels = TimeUtil.getTimeLabelsInChart();
             new SummaryView({
                 el: this.$(".summary-container"),
                 collector: collector,

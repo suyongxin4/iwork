@@ -49,19 +49,11 @@ define([
     }
 
     function getPieChartData(data) {
-        if (data.fixed) {
-            return [data.sent, data.recv];
-        } else {
-            return [data.sentTo, data.recvFr];
-        }
+        return [data.sentTo, data.recvFr];
     }
 
     function getPalette(data) {
-        if (data.fixed) {
-            return ["#d9f0a3", "#238443"];
-        } else {
-            return ["#ccebc5", "#2b8cbe"];
-        }
+        return ["#78c679", "#2b8cbe"];
     }
 
     function ellipsis(d) {
@@ -224,9 +216,11 @@ define([
         },
         calculate: function() {
             var size = Math.min(this._renderWidth, this._renderHeight);
+            var maxr = this._maxRadius = size / 6;
+            var minr = Math.max(size / 32, 10);
             var nodes = [];
             var sizeScale = d3.scale.linear();
-            sizeScale.range([Math.max(size / 32, 10), size / 8]);
+            sizeScale.range([minr, maxr]);
             var data = this._data.data;
             var totalSent = 0,
                 totalRecv = 0,
@@ -241,25 +235,24 @@ define([
             });
             sizeScale.domain([0, max]);
 
-            this._maxRadius = size / 6;
-            var me = this._data.me;
-            this._rootNode = {
-                key: me,
-                text: "You",
-                title: me,
-                context: {
-                    name: "You"
-                },
-                radius: this._maxRadius,
-                sent: totalSent,
-                recv: totalRecv,
-                sentToConnection:[],
-                recvFrConnection:[],
-                total: totalSent + totalRecv,
-                px: this._renderWidth / 2,
-                py: this._renderHeight / 2,
-                fixed: true
-            };
+            // var me = this._data.me;
+            // this._rootNode = {
+            //     key: me,
+            //     text: "You",
+            //     title: me,
+            //     context: {
+            //         name: "You"
+            //     },
+            //     radius: this._maxRadius,
+            //     sent: totalSent,
+            //     recv: totalRecv,
+            //     sentToConnection:[],
+            //     recvFrConnection:[],
+            //     total: totalSent + totalRecv,
+            //     px: this._renderWidth / 2,
+            //     py: this._renderHeight / 2,
+            //     fixed: true
+            // };
             nodes.forEach(function(node) {
                 node.radius = Math.round(sizeScale(node.total));
             });
@@ -268,7 +261,6 @@ define([
             });
             this._fullNodes = nodes;
             this._nodes = nodes.slice(0, this._number);
-            this._nodes.unshift(this._rootNode);
         },
         renderNetWork: function() {
             var nodes = this._nodes;
@@ -316,9 +308,7 @@ define([
             var node = nodeGroup.selectAll(".node")
                 .data(this._nodes);
             node.enter().append("g")
-                .attr("class", function(d, i) {
-                    return i ? "node" : "node root-node";
-                });
+                .attr("class", "node");
             node.exit().each(function(d) {
                 if (d.pie) {
                     d.pie.destroy();
@@ -326,12 +316,6 @@ define([
                 }
             }).remove();
 
-            nodeGroup.select(".root-node").attr("opacity", 1).attr("transform",
-                function(d) {
-                    d.x = d.px;
-                    d.y = d.py;
-                    return "translate(" + d.px + ", " + d.py + ")";
-                });
             node.on("mouseenter", null).on("mouseleave", null);
             node.each(function(d) {
                 if (d.pie) {
@@ -339,6 +323,7 @@ define([
                     delete d.pie;
                 }
                 var n = d3.select(this);
+                n.attr("data-key", d.key);
                 var circle = n.select("circle");
                 if (!circle.node()) {
                     circle = n.append("circle");
@@ -370,7 +355,6 @@ define([
                         .transition().duration(DURATION).attr("opacity", 1);
                     }
                 }
-                n.attr("data-key", d.key);
                 if (n.classed("root-node")) {
                     return;
                 }
@@ -393,9 +377,7 @@ define([
             var force = d3.layout.force()
                 .nodes(nodes)
                 .gravity(0.05)
-                .charge(function(d) {
-                    return d.fixed ? -1500 : -10;
-                })
+                .charge(0)
                 .size([width, height]);
             force.on("tick", function() {
                 var q = d3.geom.quadtree(nodes),
@@ -415,9 +397,6 @@ define([
             force.on("end", function() {
                 node.each(function(d, i) {
                     var n = d3.select(this);
-                    if (n.classed("root-node")) {
-                        return;
-                    }
                     var transition;
                     if (n.attr("transform")) {
                         transition = radiusTransition.transition().duration(
@@ -489,25 +468,25 @@ define([
                 }
             });
             var linkContainer = this._container.select("g.link-group");
-            var linkTo = linkContainer.selectAll("path.link-to").data(sentToLinks);
-            linkTo.enter().append("path").classed("link-to", true).classed("link", true);
-            linkTo.exit().transition().duration(DURATION).attr("opacity", 0)
-                .each("end", function(){
-                    d3.select(this).remove();
-                });
-            var meData = nodeContainer.select(".node[data-key='" + me + "']").data()[0];
-            linkTo.each(function(key) {
-                var keyData = nodeContainer.select(".node[data-key='" + key +
-                    "']").data()[0];
-                var n = d3.select(this);
-                if (n.attr("d")){
-                    d3.select(this).attr("opacity", 0)
-                    .transition().duration(DURATION).attr("d", getPathDef(meData, keyData)).attr("opacity", 1);
-                } else {
-                    d3.select(this).attr("d", getPathDef(meData, keyData)).attr("opacity", 0)
-                    .transition().duration(DURATION).attr("opacity", 1);
-                }
-            });
+            // var linkTo = linkContainer.selectAll("path.link-to").data(sentToLinks);
+            // linkTo.enter().append("path").classed("link-to", true).classed("link", true);
+            // linkTo.exit().transition().duration(DURATION).attr("opacity", 0)
+            //     .each("end", function(){
+            //         d3.select(this).remove();
+            //     });
+            // var meData = nodeContainer.select(".node[data-key='" + me + "']").data()[0];
+            // linkTo.each(function(key) {
+            //     var keyData = nodeContainer.select(".node[data-key='" + key +
+            //         "']").data()[0];
+            //     var n = d3.select(this);
+            //     if (n.attr("d")){
+            //         d3.select(this).attr("opacity", 0)
+            //         .transition().duration(DURATION).attr("d", getPathDef(meData, keyData)).attr("opacity", 1);
+            //     } else {
+            //         d3.select(this).attr("d", getPathDef(meData, keyData)).attr("opacity", 0)
+            //         .transition().duration(DURATION).attr("opacity", 1);
+            //     }
+            // });
             var linkFrom = linkContainer.selectAll("path.link-from").data(recvFrLinks);
             linkFrom.enter().append("path").classed("link-from", true).classed("link", true);
             linkFrom.exit().transition().duration(DURATION).attr("opacity", 0)
@@ -580,7 +559,6 @@ define([
                 return;
             }
             this._nodes = this._fullNodes.slice(0, this._number);
-            this._nodes.unshift(this._rootNode);
             this.renderNetWork();
         }
 

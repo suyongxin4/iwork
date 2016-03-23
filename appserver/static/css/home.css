@@ -36,7 +36,7 @@ div.root-view {
     padding: 10px;
     position: relative;
 }
-.summary-container .summary-content .block:after{
+/*.summary-container .summary-content .block:after{
     content: "";
     border-right: 1px solid #999;
     height: 100px;
@@ -51,7 +51,7 @@ div.root-view {
     position: absolute;
     top: 0;
     left:0;
-}
+}*/
 
 .summary-container .summary-content .block h3{
     height: 40px;
@@ -66,6 +66,7 @@ div.root-view {
     float: left;
     padding-left: 5px;
     padding-top:10px;
+    margin-top: 20px;
 }
 .calendar {
     width: 750px;
@@ -105,6 +106,7 @@ div.root-view {
     width: 400px;
     height: 300px;
     float: left;
+    margin-top: 20px;
 }
 .heat-indicator {
     background: #0000ff;
