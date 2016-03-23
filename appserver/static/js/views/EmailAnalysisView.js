@@ -44,7 +44,10 @@ define([
                     backgroundColor: "#eee"
                 },
                 title:{
-                    text: "Total Emails: " + (this._collector.getTotalSent() + this._collector.getTotalReceived())
+                    text: "Total Emails: " + (this._collector.getTotalSent() + this._collector.getTotalReceived()),
+                    style: {
+                        fontSize: "16px"
+                    }
                 },
                 tooltip: {
                     pointFormat: '{series.name}: <b>{point.y} mails</b>'
@@ -84,7 +87,10 @@ define([
                     backgroundColor: "#eee"
                 },
                 title:{
-                    text: "Number of Sent Emails by Hour"
+                    text: "Number of Sent Emails by Hour",
+                    style: {
+                        fontSize: "16px"
+                    }
                 },
                 subtitle:{
                     text: "Total Sent: " + this._collector.getTotalSent()

@@ -44,7 +44,10 @@ define([
                     backgroundColor: "#eee"
                 },
                 title:{
-                    text: "Number of Meetings by Duration"
+                    text: "Number of Meetings by Duration",
+                    style: {
+                        fontSize: "16px"
+                    }
                 },
                 xAxis: {
                     categories:[
@@ -90,7 +93,10 @@ define([
                     backgroundColor: "#eee"
                 },
                 title:{
-                    text: "Busy vs. Free"
+                    text: "Busy vs. Free",
+                    style: {
+                        fontSize: "16px"
+                    }
                 },
                 tooltip: {
                     pointFormat: '{point.name}: <b>{point.y:.1f} hours</b>'
@@ -128,7 +134,10 @@ define([
                     backgroundColor: "#eee"
                 },
                 title:{
-                    text: "Number of Meetings by Month"
+                    text: "Number of Meetings by Month",
+                    style: {
+                        fontSize: "16px"
+                    }
                 },
                 xAxis: {
                     categories: this._labels
@@ -168,7 +177,10 @@ define([
                     backgroundColor: "#eee"
                 },
                 title:{
-                    text: "Meetings Hours by Month"
+                    text: "Meetings Hours by Month",
+                    style: {
+                        fontSize: "16px"
+                    }
                 },
                 xAxis: {
                     categories: this._labels
