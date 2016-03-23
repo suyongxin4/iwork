@@ -10,6 +10,7 @@ define([
     'ResizeSensor',
     "splunkjs/mvc/searchmanager",
     'contrib/text!app/templates/EmailView.html',
+    'contrib/text!app/templates/Tooltip.html',
     'app/utils/TimeUtil',
     'app/utils/DataParser',
     'app/utils/EmailDataCollector',
@@ -29,6 +30,7 @@ define([
     ResizeSensor,
     SearchManager,
     Template,
+    TooltipTemplate,
     TimeUtil,
     DataParser,
     EmailDataCollector,
@@ -53,7 +55,14 @@ define([
         "app-builder@splunk.com",
         "splunk@service-now.com",
         "hipchat@splunk.com",
-        "voicemail@splunk.com"
+        "voicemail@splunk.com",
+        "news@splunk.com",
+        "employeecomm@splunk.com",
+        "it-operations@splunk.com",
+        "noreply@splunk.com",
+        "saleswins@splunk.com",
+        "no-reply@splunk.com",
+        "education_amer@splunk.com"
     ];
 
     return Backbone.View.extend({
@@ -61,6 +70,7 @@ define([
         initialize: function(options) {
             Backbone.View.prototype.initialize.apply(this, arguments);
             this._compiledTemplate = _.template(this.template);
+            this._compiledTooltipTemplate = _.template(TooltipTemplate);
             this._options = options;
             this._me = null;
             this._collector = new EmailDataCollector();
@@ -89,6 +99,7 @@ define([
         _render: function() {
             var that = this;
             this.$el.html(this._compiledTemplate({}));
+            this.$(".chart-tooltip").mouseenter(this.hideTooltip.bind(this));
             new EmailAnalysisView({
                 el: this.$(".analysis-container"),
                 collector: this._collector
@@ -115,6 +126,8 @@ define([
                 el: this.$(".network-chart"),
                 number: this.$(".sel-number").val()
             });
+            this._networkChart.onHover(_.debounce(this.showTooltip.bind(this), 10));
+            this._networkChart.onUnhover(_.debounce(this.hideTooltip.bind(this), 10));
             var lastLabel = labels[labels.length - 1];
             this._range = [lastLabel, lastLabel];
             this.startSearch();
@@ -138,6 +151,44 @@ define([
             new window.ResizeSensor(this.$(".connection-diagram-container"),
                 resizeHandler);
             return this;
+        },
+        showTooltip: function(el, data, event){
+            var tooltipData = [];
+            var type = this.$(".sel-group").val();
+            if (type === "individual"){
+                tooltipData.push({
+                    key: "Name",
+                    value: data.context.name
+                });
+                tooltipData.push({
+                    key: "Email",
+                    value: data.key
+                });
+            } else if (type === "department"){
+                tooltipData.push({
+                    key: "Department",
+                    value: data.key
+                });
+            } else if (type === "location"){
+                tooltipData.push({
+                    key: "Location",
+                    value: data.key
+                });
+            }
+            this.$(".chart-tooltip").html(this._compiledTooltipTemplate({
+                data: tooltipData,
+                sentTo: data.sentTo,
+                recvFr: data.recvFr
+            }));
+            this.$(".chart-tooltip").show();
+            var rect = this.$(".chart-tooltip")[0].getBoundingClientRect();
+            var x = event.clientX - rect.width / 2;
+            var y = event.clientY - rect.height - 20;
+            this.$(".chart-tooltip").css("left", x);
+            this.$(".chart-tooltip").css("top", y);
+        },
+        hideTooltip: function(){
+            this.$(".chart-tooltip").hide();
         },
         startSearch: function() {
             var that = this;

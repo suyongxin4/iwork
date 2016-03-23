@@ -19,7 +19,14 @@ define([
             this._data = options.data || [];
             this._palette = options.palette || d3.scale.category10().range();
             this._radius = options.radius || 0;
+            this._dispatch = d3.dispatch("hover", "unhover");
             this.calculate();
+        },
+        onHover: function(name, fn){
+            this._dispatch.on("hover." + name, fn);
+        },
+        onUnhover: function(name, fn){
+            this._dispatch.on("unhover." + name, fn);
         },
         calculate: function() {
             var total = 0;
@@ -54,6 +61,7 @@ define([
             var pie = d3.layout.pie().sort(null).value(function(d) {
                 return d;
             });
+            var dispatch = this._dispatch;
             var slices = pieContainer.selectAll("g.part").data(pie(this._data));
             slices.enter().append("g").classed("part", true);
             slices.exit().remove();
@@ -64,7 +72,18 @@ define([
                     path = slice.append("path");
                     path.style("fill", that._palette[i]);
                 }
-                path.attr("d", arc);
+                path.attr("d", arc).on("mouseenter", function(){
+                    d3.event.preventDefault();
+                    if (that.isHovering != null){
+                        dispatch.unhover(that.isHovering);
+                    }
+                    that.isHovering = i;
+                    dispatch.hover(i);
+                }).on("mouseleave", function(){
+                    d3.event.preventDefault();
+                    that.isHovering = null;
+                    dispatch.unhover(i);
+                });
                 var text = slice.select("text");
                 if (!text.node()) {
                     text = slice.append("text");
@@ -83,6 +102,8 @@ define([
         },
         destroy: function() {
             var pieContainer = this._container.select("g.pie-container");
+            this._dispatch.on("hover", null);
+            this._dispatch.on("unhover", null);
             if (pieContainer.node()) {
                 pieContainer.transition().duration(300).attr("opacity", 0).each("end", function(){
                     d3.select(this).remove();

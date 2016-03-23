@@ -91,7 +91,7 @@ div.root-view {
     -webkit-transition: background 500ms;
     -moz-transition: background 500ms;
     -o-transition: background 500ms;
-    transition: background 500ms
+    transition: background 500ms;
 }
 .calendar .month-view .fc-day-number {
     -webkit-transition: color 200ms;
