@@ -36,10 +36,15 @@ div.root-view .select-container .group-selector-container select {
 }
 .analysis-container .chart {
     width: 400px;
-    height: 48%;
     float: left;
     clear: both;
-    margin-top: 2%;
+}
+.analysis-container .chart.pie-chart {
+    height: calc(100% - 320px);
+}
+.analysis-container .chart.bar-chart {
+    height: 300px;
+    margin-top: 20px;
 }
 div.root-view .connection-diagram-container {
     width: calc(100% - 400px);
