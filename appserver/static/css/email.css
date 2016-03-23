@@ -14,6 +14,7 @@ div.root-view {
 div.root-view .select-container {
     height: 30px;
     line-height: 30px;
+    float: left;
 }
 div.root-view .select-container .number-selector-container{
     float: left;
@@ -29,8 +30,10 @@ div.root-view .select-container .group-selector-container select{
     width: 100px;
 }
 div.root-view .connection-diagram-container {
-    width: 100%;
-    height: 100%;
+    width: calc(100% - 400px);
+    height: calc(100% - 30px);
+    float: left;
+    clear: both;
 }
 div.root-view .connection-diagram-container svg {
     width: 100%;
@@ -65,7 +68,6 @@ div.root-view .connection-diagram-container svg.network-chart g.node text{
 }
 div.root-view .connection-diagram-container svg.network-chart g.node circle{
     fill: #41b6c4;
-    stroke: #333;
 }
 div.root-view .connection-diagram-container svg.network-chart g.node.root-node circle{
     fill: #78c679;

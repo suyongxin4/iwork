@@ -72,7 +72,7 @@ define([
                         RequestUtil.sendRequest("get_iwork_orgchart")
                             .done(function(response) {
                                 var orgMap = JSON.parse(response.entry[
-                                    0].content.iwork_orgchart);
+                                    0].content.iwork_orgchart.replace(/\\r\\n/g, " "));
                                 that._orgMap = transform(orgMap);
                                 render();
                             });
@@ -141,6 +141,7 @@ define([
                 count: 0,
                 offset: 0
             });
+            that._networkChart.stopListening();
             results.on("data", function(model, data) {
                 var rawIdx = data.fields.indexOf("_raw");
                 that._result = new DataParser(data, {
@@ -272,7 +273,7 @@ define([
             }
             for (i = 0; i < dp.length; ++i) {
                 fieldFrom = dp.getRowField(i, "from");
-                fieldTo = dp.getRowField(i, "to");
+                fieldTo = _.without(dp.getRowField(i, "to"), me);
                 if (fieldFrom == null || fieldTo == null ||
                     fromBlackList.indexOf(fieldFrom) > -1) {
                     continue;

@@ -83,7 +83,7 @@ define([
 
         var x2 = target.x;
         var y2 = target.y;
-        var r2 = target.radius - 14;
+        var r2 = target.radius - 2;
 
         var dx = x1 - x2;
         var dy = y1 - y2;
@@ -332,6 +332,7 @@ define([
                     d.y = d.py;
                     return "translate(" + d.px + ", " + d.py + ")";
                 });
+            node.on("mouseenter", null).on("mouseleave", null);
             node.each(function(d) {
                 if (d.pie) {
                     d.pie.destroy();
@@ -362,10 +363,12 @@ define([
                     text.remove();
                 }
                 if (showDataLabel) {
-                    text.text(function(d){
-                        return d.text;
-                    }).each(ellipsis).attr("opacity", 0)
+                    if (text.text() !== d.text){
+                        text.text(function(d){
+                            return d.text;
+                        }).each(ellipsis).attr("opacity", 0)
                         .transition().duration(DURATION).attr("opacity", 1);
+                    }
                 }
                 n.attr("data-key", d.key);
                 if (n.classed("root-node")) {
@@ -381,7 +384,6 @@ define([
                     d.y = matrix.f;
                 }
             });
-            node.on("mouseenter", null).on("mouseleave", null);
             var radiusTransition = nodeGroup.transition().duration(DURATION);
             radiusTransition.selectAll(".node").select("circle").attr("r",
                 function(d) {
@@ -416,8 +418,9 @@ define([
                     if (n.classed("root-node")) {
                         return;
                     }
+                    var transition;
                     if (n.attr("transform")) {
-                        radiusTransition.transition().duration(
+                        transition = radiusTransition.transition().duration(
                                 DURATION)
                             .select(".node:nth-child(" + (i + 1) +
                                 ")").attr("transform", function(
@@ -430,15 +433,18 @@ define([
                             return "translate(" + d.x +
                                 ", " + d.y + ")";
                         });
-                        radiusTransition.transition().duration(
+                        transition = radiusTransition.transition().duration(
                                 DURATION)
                             .select(".node:nth-child(" + (i + 1) +
                                 ")").attr("opacity", 1);
                     }
-                }).on("mouseenter", function(d, i) {
-                    onmouseover(this, d, i);
-                }).on("mouseleave", function(d, i) {
-                    onmouseleave(this, d, i);
+                    transition.each("end", function(){
+                        d3.select(this).on("mouseenter", function(d) {
+                            onmouseover(this, d, i);
+                        }).on("mouseleave", function(d) {
+                            onmouseleave(this, d, i);
+                        });
+                    });
                 });
             });
             force.start();
@@ -446,6 +452,9 @@ define([
                 force.tick();
             }
             force.stop();
+        },
+        stopListening: function(){
+            this._container.selectAll(".node-group .node").on("mouseenter", null).on("mouseleave", null);
         },
         showLinks: function(el, data) {
             var sentToConnection = data.sentToConnection;

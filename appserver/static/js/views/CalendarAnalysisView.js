@@ -5,7 +5,7 @@ define([
     'bootstrap',
     'moment',
     'app/utils/TimeUtil',
-    'contrib/text!app/templates/AnalysisView.html',
+    'contrib/text!app/templates/CalendarAnalysisView.html',
     'highcharts'
 ], function(
     $,
@@ -107,7 +107,7 @@ define([
                     enabled: false
                 },
                 series:[{
-                    name: "Number of Meetings",
+                    name: "Meeting Hours",
                     data: [{
                         name: "Meeting Hours",
                         y: this._collector.getTotalTime() / 60
