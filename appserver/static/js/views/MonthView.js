@@ -19,18 +19,18 @@ define([
     SearchManager,
     DataParser
 ) {
-    function generateBuckets(start, end){
+    function generateBuckets(start, end) {
         var buckets = {};
-        while (start.isBefore(end)){
+        while (start.isBefore(end)) {
             buckets[start.format("YYYY-MM-DD")] = 0;
             start.add(1, "d");
         }
         return buckets;
     }
 
-    function heatMapColorforValue(value){
-      var h = (1.0 - value) * 120;
-      return "hsl(" + h + ", 100%, 50%)";
+    function heatMapColorforValue(value) {
+        var h = (1.0 - value) * 120;
+        return "hsl(" + h + ", 100%, 50%)";
     }
 
     return Backbone.View.extend({
@@ -74,16 +74,27 @@ define([
             var buckets = generateBuckets(start, end);
             var index = this._index;
             var that = this;
-            var map = {};
+            this._received = false;
             results.on("data", function(model, data) {
+                if (that._received) {
+                    return;
+                }
+                that._received = true;
                 var rawIdx = data.fields.indexOf("_raw");
                 var dp = new DataParser(data, {
-                    dedup: function(rows){
+                    dedup: function(rows) {
                         var ret = [];
-                        rows.forEach(function(row){
-                            var obj = JSON.parse(row[rawIdx]);
-                            var key = [obj.start, obj.stop, obj.subject, obj.attendees?obj.attendees.join():obj.attendees].join();
-                            if (map[key]){
+                        var map = {};
+                        rows.forEach(function(row) {
+                            var obj = JSON.parse(
+                                row[rawIdx]);
+                            var key = [obj.start,
+                                obj.stop, obj.subject,
+                                obj.attendees ?
+                                obj.attendees.join() :
+                                obj.attendees
+                            ].join();
+                            if (map[key]) {
                                 return;
                             }
                             map[key] = true;
@@ -92,23 +103,27 @@ define([
                         return ret;
                     }
                 });
-                for (var i = 0; i < dp.length; ++i){
+                for (var i = 0; i < dp.length; ++i) {
                     var s = moment(dp.getRowField(i, "start"));
-                    var d = -s.diff(dp.getRowField(i, "stop"), "minutes");
+                    var d = -s.diff(dp.getRowField(i, "stop"),
+                        "minutes");
                     that._collector.addData(d, index);
                     buckets[s.format("YYYY-MM-DD")] += d;
                 }
                 that.$(".fc-day").css("background", "none");
-                for (var key in buckets){
-                    if (buckets.hasOwnProperty(key)){
-                        var day = that.$(".fc-day[data-date='"+key+"']");
+                for (var key in buckets) {
+                    if (buckets.hasOwnProperty(key)) {
+                        var day = that.$(".fc-day[data-date='" + key +
+                            "']");
                         var ratio = buckets[key] / 8 / 60;
-                        if (ratio > 1){
+                        if (ratio > 1) {
                             ratio = 1;
                         }
-                        day.css("background", heatMapColorforValue(ratio));
-                        if (ratio > 0.9){
-                            that.$(".fc-day-number[data-date='"+key+"']")
+                        day.css("background", heatMapColorforValue(
+                            ratio));
+                        if (ratio > 0.9) {
+                            that.$(".fc-day-number[data-date='" + key +
+                                    "']")
                                 .css("color", "#fff");
                         }
                     }

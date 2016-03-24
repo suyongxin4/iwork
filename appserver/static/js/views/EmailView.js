@@ -204,7 +204,12 @@ define([
                 offset: 0
             });
             this._networkChart.stopListening();
+            this._received = false;
             results.on("data", function(model, data) {
+                if (that._received){
+                    return;
+                }
+                that._received = true;
                 var rawIdx = data.fields.indexOf("_raw");
                 that._result = new DataParser(data, {
                     dedup: function(rows){
