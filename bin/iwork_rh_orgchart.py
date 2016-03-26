@@ -7,7 +7,7 @@ import splunk.admin as admin
 
 import iwork_consts as c
 from splunktalib.common import log
-logger = log.Logs(c.splunk_ta_iwork).get_logger("custom_rest")
+logger = log.Logs(c.splunk_app_iwork).get_logger("custom_rest")
 
 import splunktalib.common.pattern as scp
 import iwork_checkpointer as ckpt

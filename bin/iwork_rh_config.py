@@ -7,7 +7,7 @@ import splunk.admin as admin
 
 import iwork_consts as c
 from splunktalib.common import log
-logger = log.Logs(c.splunk_ta_iwork).get_logger("custom_rest")
+logger = log.Logs(c.splunk_app_iwork).get_logger("custom_rest")
 
 import splunktalib.common.pattern as scp
 import splunktalib.conf_manager.ta_conf_manager as tcm
@@ -28,7 +28,7 @@ class WorkConfigHandler(admin.MConfigHandler):
 
         mgr = tcm.TAConfManager(
             c.iwork, scc.getMgmtUri(), self.getSessionKey(),
-            c.splunk_ta_iwork)
+            c.splunk_app_iwork)
         mgr.reload()
         mgr.set_encrypt_keys([c.password])
         stanzas = mgr.all(return_acl=False)
@@ -50,7 +50,7 @@ class WorkConfigHandler(admin.MConfigHandler):
 
         mgr = tcm.TAConfManager(
             c.iwork, scc.getMgmtUri(), self.getSessionKey(),
-            c.splunk_ta_iwork)
+            c.splunk_app_iwork)
         mgr.set_encrypt_keys([c.password])
 
         settings = json.loads(self.callerArgs[self.key][0])
@@ -68,7 +68,7 @@ class WorkConfigHandler(admin.MConfigHandler):
 
         mgr = tcm.TAConfManager(
             c.iwork, scc.getMgmtUri(), self.getSessionKey(),
-            c.splunk_ta_iwork)
+            c.splunk_app_iwork)
         mgr.set_encrypt_keys([c.password])
 
         settings = json.loads(self.callerArgs[self.key][0])

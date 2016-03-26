@@ -20,7 +20,7 @@ class WorkCheckpointer(object):
 
     def __init__(self, config):
         self._config = config
-        self._ckpt = ss.get_state_store(config, c.splunk_ta_iwork)
+        self._ckpt = ss.get_state_store(config, c.splunk_app_iwork)
 
     def end_date(self, key):
         state = self._ckpt.get_state(key)
@@ -44,7 +44,7 @@ class EmployeeDetailLookup(object):
     def __init__(self, config):
         self._config = config
         self._ckpt = ss.get_state_store(
-            config, c.splunk_ta_iwork,
+            config, c.splunk_app_iwork,
             collection_name="iwork", use_kv_store=True)
         self._lock = threading.Lock()
         self._cached = self._ckpt.get_all_states()
@@ -75,7 +75,7 @@ class EmployeeDetailLookup(object):
             return copy.copy(self._cached)
 
     def delete_all(self):
-        self._ckpt._kv_client.delete_collection("iwork", c.splunk_ta_iwork)
+        self._ckpt._kv_client.delete_collection("iwork", c.splunk_app_iwork)
 
     def update_in_batch(self, emps):
         with self._lock:
@@ -83,7 +83,7 @@ class EmployeeDetailLookup(object):
 
 
 def insert_all_emps(config, charts):
-    store = ss.get_state_store(config, c.splunk_ta_iwork)
+    store = ss.get_state_store(config, c.splunk_app_iwork)
     state = store.get_state("batch_insert_done")
     if state:
         logger.info("batch insert already done")
