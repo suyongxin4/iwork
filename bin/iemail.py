@@ -207,7 +207,6 @@ class OutlookEmailDataLoader(object):
 
             do_collect(start_date, edate)
             start_date = edate
-        do_collect(start_date, end_date)
 
     def _collect_data_for_folder(self, connection, folder, filters):
         logger.info("Start collecting email data for folder=%s, filters=%s",
