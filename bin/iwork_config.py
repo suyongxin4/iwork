@@ -28,7 +28,7 @@ class IWorkConfig(object):
     def get_tasks(self):
         mgr = tcm.TAConfManager(
             c.iwork, self._metas[c.server_uri], self._metas[c.session_key],
-            c.splunk_ta_iwork)
+            c.splunk_app_iwork)
         mgr.reload()
         mgr.set_encrypt_keys([c.password])
         stanzas = mgr.all(return_acl=False)
@@ -54,7 +54,8 @@ class IWorkConfig(object):
         mgr.set_encrypt_keys([c.password])
         for k in [c.iemail_settings, c.icalendar_settings]:
             if k in stanzas and stanzas[k]:
-                if stanzas[k][c.username] and not mgr.is_encrypted(stanzas[k]):
+                if (stanzas[k][c.username] and stanzas[k][c.password]
+                        and not mgr.is_encrypted(stanzas[k])):
                     mgr.update(stanzas[k])
 
         return tasks

@@ -63,6 +63,10 @@ def fetch(connection, msg_id):
     return None
 
 
+def clean_up_name(name):
+    return " ".join((part.strip() for part in name.split(" ")))
+
+
 def message_to_json(message, ckpt, raw=False):
     if not message[0]:
         logger.warn("Got invalid message=%s", message)
@@ -78,7 +82,7 @@ def message_to_json(message, ckpt, raw=False):
         if res:
             name, sender = res.group(1).strip(), res.group(2).strip().lower()
             if name:
-                ckpt.update(name, sender)
+                ckpt.update(clean_up_name(name), sender)
             else:
                 logger.warn("Unmatched from=%s", msg.get("From"))
 
@@ -91,7 +95,7 @@ def message_to_json(message, ckpt, raw=False):
                 name, email = name.strip(), email.lower().strip()
                 res.append(email)
                 if name:
-                    ckpt.update(name.strip(), email.strip())
+                    ckpt.update(clean_up_name(name), email)
                 else:
                     logger.warn("Unmatched to=%s", email)
             receivers = res
@@ -203,7 +207,6 @@ class OutlookEmailDataLoader(object):
 
             do_collect(start_date, edate)
             start_date = edate
-        do_collect(start_date, end_date)
 
     def _collect_data_for_folder(self, connection, folder, filters):
         logger.info("Start collecting email data for folder=%s, filters=%s",

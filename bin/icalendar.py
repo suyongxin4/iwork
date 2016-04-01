@@ -89,8 +89,6 @@ class OutlookCalendarDataLoader(object):
             self._ckpt.set_end_date(self._key, edate)
             start_date = edate
 
-        self._collect_and_index(calendar, start_date, end_date)
-        self._ckpt.set_end_date(self._key, end_date)
         logger.info("End of collecting calendar data")
 
     def _collect_and_index(self, calendar, start_date, end_date):
