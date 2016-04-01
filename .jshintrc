@@ -10,9 +10,9 @@
     "globals": {
         "define": false,
         "require": false,
-        "window": true,
-        "document": true,
-        "FileReader": false,
-        "Highcharts": false
+        "navigator": false,
+        "window": false,
+        "document": false,
+        "FileReader": false
     }
 }
