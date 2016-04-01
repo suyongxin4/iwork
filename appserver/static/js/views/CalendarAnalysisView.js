@@ -82,6 +82,12 @@ define([
                 }]
             });
             Highcharts.getOptions().plotOptions.pie.colors = ["#2b8cbe", "#78c679"];
+            var total = TimeUtil.getHours();
+            var busy = this._collector.getTotalTime() / 60;
+            if (busy > total){
+                busy = total;
+            }
+            var free = total - busy;
             this.$(".pie-chart").highcharts({
                 navigation: {
                     buttonOptions:{
@@ -116,10 +122,10 @@ define([
                     name: "Meeting Hours",
                     data: [{
                         name: "Meeting Hours",
-                        y: this._collector.getTotalTime() / 60
+                        y: busy
                     },{
                         name: "Free Hours",
-                        y: TimeUtil.getHours() - this._collector.getTotalTime() / 60
+                        y: free
                     }]
                 }]
             });
